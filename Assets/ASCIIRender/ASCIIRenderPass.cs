@@ -4,6 +4,11 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
+/// <summary>
+/// URP RenderGraph render pass for the ASCII post-processing effect.
+/// The RendererFeature owns the Material and Settings, the passes them into this RenderPass.
+/// This class uses those resources to register RenderGraph work every frame.
+/// </summary>
 public sealed class ASCIIRenderPass : ScriptableRenderPass
 {
     private const int CopyPass = 0;
@@ -16,6 +21,7 @@ public sealed class ASCIIRenderPass : ScriptableRenderPass
 
     private const string ComputeKernelName = "CS_DrawEdges";
 
+    // Cached shader property IDs.
     private static readonly int AsciiTexId = Shader.PropertyToID("_AsciiTex");
     private static readonly int LuminanceTexId = Shader.PropertyToID("_LuminanceTex");
 
@@ -39,12 +45,18 @@ public sealed class ASCIIRenderPass : ScriptableRenderPass
     private static readonly int ResultWidthId = Shader.PropertyToID("_ResultWidth");
     private static readonly int ResultHeightId = Shader.PropertyToID("_ResultHeight");
 
+    // Material created and disposed by the RendererFeature.
     private readonly Material material;
+
+    // Settings are owned by the RendererFeature and refreshed every frame in ASCIIRendererFeature.AddRenderPasses().
     private ASCIIRendererFeature.ASCIISettings settings;
 
+    // For trackingwhether the user changed the atlas textures in the Inspector.
+    // If the texture reference changes, we release the old RTHandle wrapper and allocate a new one.
     private Texture currentAsciiTex;
     private Texture currentEdgeTex;
 
+    // RTHandle wrappers around external atlas textures.
     private RTHandle asciiTexRTHandle;
     private RTHandle edgeTexRTHandle;
 
@@ -54,11 +66,19 @@ public sealed class ASCIIRenderPass : ScriptableRenderPass
         this.settings = settings;
     }
 
+    /// <summary>
+    /// Updates the pass with the latest settings from the RendererFeature.
+    /// This is called from ASCIIRendererFeature.AddRenderPasses()
+    /// </summary>
+    /// <param name="newSettings">Latest Inspector settings object.</param>
     public void SetSettings(ASCIIRendererFeature.ASCIISettings newSettings)
     {
         settings = newSettings;
     }
 
+    /// <summary>
+    /// Releases RTHandle wrappers created for imported external textures.
+    /// </summary>
     public void Dispose()
     {
         ReleaseImportedTextureHandles();
