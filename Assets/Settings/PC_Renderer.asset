@@ -92,7 +92,7 @@ MonoBehaviour:
     viewQuantizedSobel: 0
     noEdges: 0
     noFill: 0
-    renderPassEvent: 600
+    renderPassInjectionPoint: 600
     applyToSceneView: 1
 --- !u!114 &7833122117494664109
 MonoBehaviour:

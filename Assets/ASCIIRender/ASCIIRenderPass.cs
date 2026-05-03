@@ -9,7 +9,7 @@ using UnityEngine.Rendering.Universal;
 /// The RendererFeature owns the Material and Settings, the passes them into this RenderPass.
 /// This class uses those resources to register RenderGraph work every frame.
 /// </summary>
-public sealed class ASCIIRenderPass : ScriptableRenderPass
+public class ASCIIRenderPass : ScriptableRenderPass
 {
     private const int CopyPass = 0;
     private const int LuminancePass = 1;
@@ -51,7 +51,7 @@ public sealed class ASCIIRenderPass : ScriptableRenderPass
     // Settings are owned by the RendererFeature and refreshed every frame in ASCIIRendererFeature.AddRenderPasses().
     private ASCIIRendererFeature.ASCIISettings settings;
 
-    // For trackingwhether the user changed the atlas textures in the Inspector.
+    // For tracking whether the user changed the atlas textures in the Inspector.
     // If the texture reference changes, we release the old RTHandle wrapper and allocate a new one.
     private Texture currentAsciiTex;
     private Texture currentEdgeTex;
@@ -60,422 +60,25 @@ public sealed class ASCIIRenderPass : ScriptableRenderPass
     private RTHandle asciiTexRTHandle;
     private RTHandle edgeTexRTHandle;
 
-    public ASCIIRenderPass(Material material, ASCIIRendererFeature.ASCIISettings settings)
-    {
-        this.material = material;
-        this.settings = settings;
-    }
+
 
     /// <summary>
-    /// Updates the pass with the latest settings from the RendererFeature.
-    /// This is called from ASCIIRendererFeature.AddRenderPasses()
+    /// Data package for a raster blit RenderGraph pass.
     /// </summary>
-    /// <param name="newSettings">Latest Inspector settings object.</param>
-    public void SetSettings(ASCIIRendererFeature.ASCIISettings newSettings)
-    {
-        settings = newSettings;
-    }
-
-    /// <summary>
-    /// Releases RTHandle wrappers created for imported external textures.
-    /// </summary>
-    public void Dispose()
-    {
-        ReleaseImportedTextureHandles();
-    }
-
-    public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
-    {
-        if (material == null || settings == null || settings.asciiCompute == null)
-            return;
-
-        if (settings.asciiTex == null || settings.edgeTex == null)
-            return;
-
-        if (!SystemInfo.supportsComputeShaders)
-            return;
-
-        UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
-
-        if (resourceData.isActiveTargetBackBuffer)
-            return;
-
-        TextureHandle cameraColor = resourceData.activeColorTexture;
-
-        if (!cameraColor.IsValid())
-            return;
-
-        UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-
-        RenderTextureDescriptor fullDesc = cameraData.cameraTargetDescriptor;
-        fullDesc.msaaSamples = 1;
-        fullDesc.depthBufferBits = 0;
-
-        int width = Mathf.Max(1, fullDesc.width);
-        int height = Mathf.Max(1, fullDesc.height);
-
-        UpdateMaterialSettings();
-        EnsureImportedTextureHandles();
-
-        TextureHandle asciiTex = renderGraph.ImportTexture(asciiTexRTHandle);
-        TextureHandle edgeTex = renderGraph.ImportTexture(edgeTexRTHandle);
-
-        TextureHandle luminance = CreateTexture(
-            renderGraph,
-            fullDesc,
-            "ASCII Luminance",
-            GraphicsFormat.R16_SFloat,
-            width,
-            height,
-            false
-        );
-
-        TextureHandle ping = CreateTexture(
-            renderGraph,
-            fullDesc,
-            "ASCII Ping",
-            fullDesc.graphicsFormat,
-            width,
-            height,
-            false
-        );
-
-        TextureHandle dog = CreateTexture(
-            renderGraph,
-            fullDesc,
-            "ASCII DoG",
-            fullDesc.graphicsFormat,
-            width,
-            height,
-            false
-        );
-
-        TextureHandle sobel = CreateTexture(
-            renderGraph,
-            fullDesc,
-            "ASCII Sobel",
-            fullDesc.graphicsFormat,
-            width,
-            height,
-            false
-        );
-
-        TextureHandle downscale1 = CreateTexture(
-            renderGraph,
-            fullDesc,
-            "ASCII Downscale 1",
-            fullDesc.graphicsFormat,
-            Mathf.Max(1, width / 2),
-            Mathf.Max(1, height / 2),
-            false
-        );
-
-        TextureHandle downscale2 = CreateTexture(
-            renderGraph,
-            fullDesc,
-            "ASCII Downscale 2",
-            fullDesc.graphicsFormat,
-            Mathf.Max(1, width / 4),
-            Mathf.Max(1, height / 4),
-            false
-        );
-
-        TextureHandle downscale3 = CreateTexture(
-            renderGraph,
-            fullDesc,
-            "ASCII Downscale 3",
-            fullDesc.graphicsFormat,
-            Mathf.Max(1, width / 8),
-            Mathf.Max(1, height / 8),
-            false
-        );
-
-        TextureHandle asciiResult = CreateTexture(
-            renderGraph,
-            fullDesc,
-            "ASCII Result",
-            fullDesc.graphicsFormat,
-            width,
-            height,
-            true
-        );
-
-        AddBlitPass(renderGraph, cameraColor, luminance, LuminancePass, "ASCII - Luminance");
-
-        AddBlitPass(renderGraph, luminance, ping, HorizontalBlurPass, "ASCII - Horizontal Blur");
-
-        AddBlitPass(renderGraph, ping, dog, VerticalBlurDifferencePass, "ASCII - Vertical Blur + Difference");
-
-        AddBlitPassWithExtraTexture(
-            renderGraph,
-            dog,
-            ping,
-            luminance,
-            LuminanceTexId,
-            SobelHorizontalPass,
-            "ASCII - Sobel Horizontal"
-        );
-
-        AddBlitPass(renderGraph, ping, sobel, SobelVerticalPass, "ASCII - Sobel Vertical");
-
-        AddBlitPassWithExtraTexture(
-            renderGraph,
-            cameraColor,
-            ping,
-            luminance,
-            LuminanceTexId,
-            PackLuminancePass,
-            "ASCII - Pack Luminance"
-        );
-
-        AddBlitPass(renderGraph, ping, downscale1, CopyPass, "ASCII - Downscale 1");
-        AddBlitPass(renderGraph, downscale1, downscale2, CopyPass, "ASCII - Downscale 2");
-        AddBlitPass(renderGraph, downscale2, downscale3, CopyPass, "ASCII - Downscale 3");
-
-        AddComputePass(
-            renderGraph,
-            sobel,
-            downscale3,
-            asciiResult,
-            asciiTex,
-            edgeTex,
-            width,
-            height
-        );
-
-        TextureHandle finalSource = asciiResult;
-
-        if (settings.viewDog)
-            finalSource = dog;
-
-        if (settings.viewSobel)
-            finalSource = sobel;
-
-        AddBlitPass(renderGraph, finalSource, cameraColor, CopyPass, "ASCII - Final Output");
-    }
-
-    private void UpdateMaterialSettings()
-    {
-        material.SetTexture(AsciiTexId, settings.asciiTex);
-
-        material.SetFloat(KId, settings.stdevScale);
-        material.SetFloat(SigmaId, settings.stdev);
-        material.SetFloat(TauId, settings.tau);
-        material.SetFloat(ThresholdId, settings.threshold);
-
-        material.SetInt(GaussianKernelSizeId, settings.gaussianKernelSize);
-        material.SetInt(InvertId, settings.invert ? 1 : 0);
-    }
-
-    private void EnsureImportedTextureHandles()
-    {
-        if (currentAsciiTex != settings.asciiTex)
-        {
-            if (asciiTexRTHandle != null)
-                RTHandles.Release(asciiTexRTHandle);
-
-            asciiTexRTHandle = RTHandles.Alloc(settings.asciiTex);
-            currentAsciiTex = settings.asciiTex;
-        }
-
-        if (currentEdgeTex != settings.edgeTex)
-        {
-            if (edgeTexRTHandle != null)
-                RTHandles.Release(edgeTexRTHandle);
-
-            edgeTexRTHandle = RTHandles.Alloc(settings.edgeTex);
-            currentEdgeTex = settings.edgeTex;
-        }
-    }
-
-    private void ReleaseImportedTextureHandles()
-    {
-        if (asciiTexRTHandle != null)
-        {
-            RTHandles.Release(asciiTexRTHandle);
-            asciiTexRTHandle = null;
-        }
-
-        if (edgeTexRTHandle != null)
-        {
-            RTHandles.Release(edgeTexRTHandle);
-            edgeTexRTHandle = null;
-        }
-
-        currentAsciiTex = null;
-        currentEdgeTex = null;
-    }
-
-    private static TextureHandle CreateTexture(
-        RenderGraph renderGraph,
-        RenderTextureDescriptor baseDesc,
-        string name,
-        GraphicsFormat format,
-        int width,
-        int height,
-        bool enableRandomWrite
-    )
-    {
-        RenderTextureDescriptor desc = baseDesc;
-        desc.width = width;
-        desc.height = height;
-        desc.depthBufferBits = 0;
-        desc.msaaSamples = 1;
-        desc.graphicsFormat = format;
-        desc.enableRandomWrite = enableRandomWrite;
-
-        return UniversalRenderer.CreateRenderGraphTexture(renderGraph, desc, name, false);
-    }
-
-    private void AddBlitPass(
-        RenderGraph renderGraph,
-        TextureHandle source,
-        TextureHandle destination,
-        int shaderPass,
-        string passName
-    )
-    {
-        AddBlitPassWithExtraTexture(
-            renderGraph,
-            source,
-            destination,
-            TextureHandle.nullHandle,
-            0,
-            shaderPass,
-            passName
-        );
-    }
-
-    private void AddBlitPassWithExtraTexture(
-        RenderGraph renderGraph,
-        TextureHandle source,
-        TextureHandle destination,
-        TextureHandle extraTexture,
-        int extraTextureId,
-        int shaderPass,
-        string passName
-    )
-    {
-        using IRasterRenderGraphBuilder builder =
-            renderGraph.AddRasterRenderPass<BlitPassData>(passName, out BlitPassData passData);
-
-        passData.source = source;
-        passData.extraTexture = extraTexture;
-        passData.extraTextureId = extraTextureId;
-        passData.hasExtraTexture = extraTexture.IsValid();
-        passData.material = material;
-        passData.shaderPass = shaderPass;
-
-        builder.UseTexture(source, AccessFlags.Read);
-
-        if (passData.hasExtraTexture)
-            builder.UseTexture(extraTexture, AccessFlags.Read);
-
-        builder.SetRenderAttachment(destination, 0);
-
-        if (passData.hasExtraTexture)
-            builder.AllowGlobalStateModification(true);
-
-        builder.SetRenderFunc(static (BlitPassData data, RasterGraphContext context) =>
-        {
-            if (data.hasExtraTexture)
-                context.cmd.SetGlobalTexture(data.extraTextureId, data.extraTexture);
-
-            Blitter.BlitTexture(
-                context.cmd,
-                data.source,
-                new Vector4(1.0f, 1.0f, 0.0f, 0.0f),
-                data.material,
-                data.shaderPass
-            );
-        });
-    }
-
-    private void AddComputePass(
-        RenderGraph renderGraph,
-        TextureHandle sobel,
-        TextureHandle luminanceDownscaled,
-        TextureHandle result,
-        TextureHandle asciiTex,
-        TextureHandle edgeTex,
-        int width,
-        int height
-    )
-    {
-        using IComputeRenderGraphBuilder builder =
-            renderGraph.AddComputePass<ComputePassData>("ASCII - Compute Characters", out ComputePassData passData);
-
-        int kernel = settings.asciiCompute.FindKernel(ComputeKernelName);
-
-        passData.compute = settings.asciiCompute;
-        passData.kernel = kernel;
-
-        passData.sobel = sobel;
-        passData.luminance = luminanceDownscaled;
-        passData.result = result;
-        passData.asciiTex = asciiTex;
-        passData.edgeTex = edgeTex;
-
-        passData.viewUncompressed = settings.viewUncompressedEdges ? 1 : 0;
-        passData.debugEdges = settings.debugEdges ? 1 : 0;
-        passData.grid = settings.viewGrid ? 1 : 0;
-        passData.noEdges = settings.noEdges ? 1 : 0;
-        passData.noFill = settings.noFill ? 1 : 0;
-
-        passData.edgeThreshold = settings.edgeThreshold;
-        passData.exposure = settings.exposure;
-        passData.attenuation = settings.attenuation;
-        passData.useDownscaledColor = settings.useDownscaledColor ? 1 : 0;
-
-        passData.width = width;
-        passData.height = height;
-
-        builder.UseTexture(sobel, AccessFlags.Read);
-        builder.UseTexture(luminanceDownscaled, AccessFlags.Read);
-        builder.UseTexture(asciiTex, AccessFlags.Read);
-        builder.UseTexture(edgeTex, AccessFlags.Read);
-        builder.UseTexture(result, AccessFlags.Write);
-
-        builder.SetRenderFunc(static (ComputePassData data, ComputeGraphContext context) =>
-        {
-            context.cmd.SetComputeTextureParam(data.compute, data.kernel, "_SobelTex", data.sobel);
-            context.cmd.SetComputeTextureParam(data.compute, data.kernel, "_LuminanceTex", data.luminance);
-            context.cmd.SetComputeTextureParam(data.compute, data.kernel, "_Result", data.result);
-            context.cmd.SetComputeTextureParam(data.compute, data.kernel, "_AsciiTex", data.asciiTex);
-            context.cmd.SetComputeTextureParam(data.compute, data.kernel, "_EdgeAsciiTex", data.edgeTex);
-
-            context.cmd.SetComputeIntParam(data.compute, ViewUncompressedId, data.viewUncompressed);
-            context.cmd.SetComputeIntParam(data.compute, DebugEdgesId, data.debugEdges);
-            context.cmd.SetComputeIntParam(data.compute, GridId, data.grid);
-            context.cmd.SetComputeIntParam(data.compute, NoEdgesId, data.noEdges);
-            context.cmd.SetComputeIntParam(data.compute, NoFillId, data.noFill);
-            context.cmd.SetComputeIntParam(data.compute, EdgeThresholdId, data.edgeThreshold);
-
-            context.cmd.SetComputeFloatParam(data.compute, ExposureId, data.exposure);
-            context.cmd.SetComputeFloatParam(data.compute, AttenuationId, data.attenuation);
-            context.cmd.SetComputeIntParam(data.compute, UseDownscaledColorId, data.useDownscaledColor);
-
-            context.cmd.SetComputeIntParam(data.compute, ResultWidthId, data.width);
-            context.cmd.SetComputeIntParam(data.compute, ResultHeightId, data.height);
-
-            int groupsX = Mathf.CeilToInt(data.width / 8.0f);
-            int groupsY = Mathf.CeilToInt(data.height / 8.0f);
-
-            context.cmd.DispatchCompute(data.compute, data.kernel, groupsX, groupsY, 1);
-        });
-    }
-
-    private sealed class BlitPassData
+    private class BlitPassData
     {
         public TextureHandle source;
-        public TextureHandle extraTexture;
+        public TextureHandle extraTextureInput;
         public int extraTextureId;
-        public bool hasExtraTexture;
+        public bool hasExtraTextureInput;
         public Material material;
         public int shaderPass;
     }
 
-    private sealed class ComputePassData
+    /// <summary>
+    /// Data package for the ASCII compute RenderGraph pass.
+    /// </summary>
+    private class ComputePassData
     {
         public ComputeShader compute;
         public int kernel;
@@ -500,4 +103,579 @@ public sealed class ASCIIRenderPass : ScriptableRenderPass
         public int width;
         public int height;
     }
+
+
+    public ASCIIRenderPass(Material material, ASCIIRendererFeature.ASCIISettings settings)
+    {
+        this.material = material;
+        this.settings = settings;
+    }
+
+
+
+    /// <summary>
+    /// Updates the pass with the latest settings from the RendererFeature.
+    /// This is called from ASCIIRendererFeature.AddRenderPasses()
+    /// </summary>
+    /// <param name="newSettings">Latest Inspector settings object.</param>
+    public void SetSettings(ASCIIRendererFeature.ASCIISettings newSettings)
+    {
+        settings = newSettings;
+    }
+
+    /// <summary>
+    /// Releases RTHandle wrappers for imported atlas textures.
+    /// This is called when the RendererFeature / RenderPass is disposed.
+    /// </summary>
+    public void ReleaseAtlasRTHandles()
+    {
+        if (asciiTexRTHandle != null)
+        {
+            RTHandles.Release(asciiTexRTHandle);
+            asciiTexRTHandle = null;
+        }
+
+        if (edgeTexRTHandle != null)
+        {
+            RTHandles.Release(edgeTexRTHandle);
+            edgeTexRTHandle = null;
+        }
+
+        currentAsciiTex = null;
+        currentEdgeTex = null;
+    }
+
+
+
+
+
+    /// ================================= main URP entry ========================================
+    /// <summary>
+    /// Declares temporary textures and registers raster / compute passes.
+    /// </summary>
+    /// <param name="renderGraph">Use the current frame's RenderGraph to create textures and add passes.</param>
+    /// <param name="frameData">URP frame context. Use it to access camera color, descriptor and other resources.</param>
+    public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+    {
+        if (material == null || settings == null || settings.asciiCompute == null)
+            return;
+
+        if (settings.asciiTex == null || settings.edgeTex == null)
+            return;
+
+        if (!SystemInfo.supportsComputeShaders)
+            return;
+
+        // UniversalResourceData contains current frame render targets.
+        UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+
+        if (resourceData.isActiveTargetBackBuffer)
+            return;
+
+        // Current camera color texture.
+        // This is the full-screen image produced by URP so far.
+        TextureHandle cameraColor = resourceData.activeColorTexture;
+
+        if (!cameraColor.IsValid())
+            return;
+
+        // UniversalCameraData contains camera resolution and target texture descriptor.
+        UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+
+        // Copy the camera descriptor as a base for temporary textures.
+        RenderTextureDescriptor fullDesc = cameraData.cameraTargetDescriptor;
+        fullDesc.msaaSamples = 1;
+        fullDesc.depthBufferBits = 0;
+
+        int width = Mathf.Max(1, fullDesc.width);
+        int height = Mathf.Max(1, fullDesc.height);
+
+        UpdateSettingsToMaterial();
+        EnsureAtlasRTHandles();
+
+        TextureHandle asciiTex = renderGraph.ImportTexture(asciiTexRTHandle);
+        TextureHandle edgeTex = renderGraph.ImportTexture(edgeTexRTHandle);
+
+        TextureHandle luminance = CreateRenderGraphTexture(
+            renderGraph,
+            fullDesc,
+            "_ASCII_LuminanceTex",
+            GraphicsFormat.R16_SFloat,
+            width,
+            height,
+            false
+        );
+
+        TextureHandle ping = CreateRenderGraphTexture(
+            renderGraph,
+            fullDesc,
+            "_ASCII_PingTex",
+            fullDesc.graphicsFormat,
+            width,
+            height,
+            false
+        );
+
+        TextureHandle dog = CreateRenderGraphTexture(
+            renderGraph,
+            fullDesc,
+            "_ASCII_DoGTex",
+            fullDesc.graphicsFormat,
+            width,
+            height,
+            false
+        );
+
+        TextureHandle sobel = CreateRenderGraphTexture(
+            renderGraph,
+            fullDesc,
+            "_ASCII_SobelTex",
+            fullDesc.graphicsFormat,
+            width,
+            height,
+            false
+        );
+
+        TextureHandle downscale1 = CreateRenderGraphTexture(
+            renderGraph,
+            fullDesc,
+            "_ASCII_DownscaleHalfTex",
+            fullDesc.graphicsFormat,
+            Mathf.Max(1, width / 2),
+            Mathf.Max(1, height / 2),
+            false
+        );
+
+        TextureHandle downscale2 = CreateRenderGraphTexture(
+            renderGraph,
+            fullDesc,
+            "_ASCII_DownscaleQuarterTex",
+            fullDesc.graphicsFormat,
+            Mathf.Max(1, width / 4),
+            Mathf.Max(1, height / 4),
+            false
+        );
+
+        TextureHandle downscale3 = CreateRenderGraphTexture(
+            renderGraph,
+            fullDesc,
+            "_ASCII_DownscaleEighthTex",
+            fullDesc.graphicsFormat,
+            Mathf.Max(1, width / 8),
+            Mathf.Max(1, height / 8),
+            false
+        );
+
+        TextureHandle asciiResult = CreateRenderGraphTexture(
+            renderGraph,
+            fullDesc,
+            "_ASCII_ResultTex",
+            fullDesc.graphicsFormat,
+            width,
+            height,
+            true
+        );
+
+        AddBlitPass(renderGraph, cameraColor, luminance, LuminancePass, "RG_ASCII_LuminanceExtract");
+
+        AddBlitPass(renderGraph, luminance, ping, HorizontalBlurPass, "RG_ASCII_GaussianBlurHorizontal");
+
+        AddBlitPass(renderGraph, ping, dog, VerticalBlurDifferencePass, "RG_ASCII_GaussianBlurVertical_DoG");
+
+        AddBlitPassWithExtraTextureInput(
+            renderGraph,
+            dog,
+            ping,
+            luminance,
+            LuminanceTexId,
+            SobelHorizontalPass,
+            "RG_ASCII_SobelHorizontal"
+        );
+
+        AddBlitPass(renderGraph, ping, sobel, SobelVerticalPass, "RG_ASCII_SobelVertical");
+
+        AddBlitPassWithExtraTextureInput(
+            renderGraph,
+            cameraColor,
+            ping,
+            luminance,
+            LuminanceTexId,
+            PackLuminancePass,
+            "RG_ASCII_PackColorLuminance"
+        );
+
+        AddBlitPass(renderGraph, ping, downscale1, CopyPass, "RG_ASCII_DownscaleHalf");
+        AddBlitPass(renderGraph, downscale1, downscale2, CopyPass, "RG_ASCII_DownscaleQuarter");
+        AddBlitPass(renderGraph, downscale2, downscale3, CopyPass, "RG_ASCII_DownscaleEighth");
+
+        AddComputePass(
+            renderGraph,
+            sobel,
+            downscale3,
+            asciiResult,
+            asciiTex,
+            edgeTex,
+            width,
+            height
+        );
+
+        TextureHandle finalSource = asciiResult;
+
+        if (settings.viewDog)
+            finalSource = dog;
+
+        if (settings.viewSobel)
+            finalSource = sobel;
+
+        AddBlitPass(renderGraph, finalSource, cameraColor, CopyPass, "RG_ASCII_FinalComposite");
+    }
+
+
+
+
+
+    /// ================================= settings / resource helpers ========================================
+    /// <summary>
+    /// Copies Inspector settings into the full-screen Material.
+    /// Settings live in C# on the RendererFeature.
+    /// This function bridges those two layers by writing values into the Material.
+    /// </summary>
+    private void UpdateSettingsToMaterial()
+    {
+        material.SetTexture(AsciiTexId, settings.asciiTex);
+
+        material.SetFloat(KId, settings.stdevScale);
+        material.SetFloat(SigmaId, settings.stdev);
+        material.SetFloat(TauId, settings.tau);
+        material.SetFloat(ThresholdId, settings.threshold);
+
+        material.SetInt(GaussianKernelSizeId, settings.gaussianKernelSize);
+        material.SetInt(InvertId, settings.invert ? 1 : 0);
+    }
+
+    /// <summary>
+    /// Ensures that external atlas textures have RTHandle wrappers.
+    /// </summary>
+    private void EnsureAtlasRTHandles()
+    {
+        if (currentAsciiTex != settings.asciiTex)
+        {
+            if (asciiTexRTHandle != null)
+                RTHandles.Release(asciiTexRTHandle);
+
+            asciiTexRTHandle = RTHandles.Alloc(settings.asciiTex);
+            currentAsciiTex = settings.asciiTex;
+        }
+
+        if (currentEdgeTex != settings.edgeTex)
+        {
+            if (edgeTexRTHandle != null)
+                RTHandles.Release(edgeTexRTHandle);
+
+            edgeTexRTHandle = RTHandles.Alloc(settings.edgeTex);
+            currentEdgeTex = settings.edgeTex;
+        }
+    }
+
+    /// <summary>
+    /// Creates a temporary RenderGraph texture from a base camera descriptor.
+    /// This helper centralizes the common descriptor edits needed by intermediate textures:
+    /// custom width/height, custom graphics format, no depth buffer, no MSAA, and optional
+    /// random write support for compute shader outputs.
+    /// </summary>
+    /// <param name="renderGraph"></param>
+    /// <param name="baseDesc"></param>
+    /// <param name="name">Debug name visible in Frame Debugger / RenderGraph tools.</param>
+    /// <param name="format">Graphics format used to store pixel data.</param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="enableRandomWrite">True if a compute shader needs UAV/random-write access.</param>
+    /// <returns></returns>
+    private static TextureHandle CreateRenderGraphTexture(
+        RenderGraph renderGraph,
+        RenderTextureDescriptor baseDesc,
+        string textureName,
+        GraphicsFormat format,
+        int width,
+        int height,
+        bool enableRandomWrite
+    )
+    {
+        RenderTextureDescriptor desc = baseDesc;
+        desc.width = width;
+        desc.height = height;
+        desc.depthBufferBits = 0;
+        desc.msaaSamples = 1;
+        desc.graphicsFormat = format;
+        desc.enableRandomWrite = enableRandomWrite;
+
+        // The final false means this texture is not explicitly cleared on creation.
+        // This is safe because every pass using these textures fully overwrites them.
+        return UniversalRenderer.CreateRenderGraphTexture(renderGraph, desc, textureName, false);
+    }
+
+
+
+
+
+    /// ================================= RenderGraph pass helpers ========================================
+    /// <summary>
+    /// Adds a simple full-screen blit pass with one source texture and one destination texture.
+    /// </summary>
+    /// <param name="renderGraph"></param>
+    /// <param name="source"></param>
+    /// <param name="destination"></param>
+    /// <param name="shaderPass"></param>
+    /// <param name="passName"></param>
+    private void AddBlitPass(
+        RenderGraph renderGraph,
+        TextureHandle source,
+        TextureHandle destination,
+        int shaderPass,
+        string passName
+    )
+    {
+        AddBlitPassWithExtraTextureInput(
+            renderGraph,
+            source,
+            destination,
+            TextureHandle.nullHandle,
+            0,
+            shaderPass,
+            passName
+        );
+    }
+
+    /// <summary>
+    /// Adds a full-screen raster blit pass, optionally with a second input texture.
+    /// The main source texture is passed through Blitter.BlitTexture().
+    /// The optional extra texture is bound manually as a global shader texture.
+    /// </summary>
+    /// <param name="renderGraph">Current frame RenderGraph.</param>
+    /// <param name="source">Main input texture for Blitter.BlitTexture().</param>
+    /// <param name="destination">Output render target.</param>
+    /// <param name="extraTexture">Optional second texture sampled by the shader pass.</param>
+    /// <param name="extraTextureId">Shader property ID used to bind the extra texture.</param>
+    /// <param name="shaderPass">Material shader pass index to execute.</param>
+    /// <param name="passName">Debug name for this RenderGraph pass.</param>
+    private void AddBlitPassWithExtraTextureInput(
+        RenderGraph renderGraph,
+        TextureHandle source,
+        TextureHandle destination,
+        TextureHandle extraTextureInput,
+        int extraTextureId,
+        int shaderPass,
+        string passName
+    )
+    {
+        // AddRasterRenderPass creates a raster pass and returns a builder.
+        // The builder configures resource dependencies and the render function.
+        using IRasterRenderGraphBuilder builder =
+            renderGraph.AddRasterRenderPass<BlitPassData>(passName, out BlitPassData passData);
+
+        // PassData stores values needed later when RenderGraph executes this pass.
+        passData.source = source;
+        passData.extraTextureInput = extraTextureInput;
+        passData.extraTextureId = extraTextureId;
+        passData.hasExtraTextureInput = extraTextureInput.IsValid();
+        passData.material = material;
+        passData.shaderPass = shaderPass;
+
+        // Tell RenderGraph that this pass reads the main source texture.
+        builder.UseTexture(passData.source, AccessFlags.Read);
+
+        // If the shader samples a second texture, RenderGraph must know it is also read.
+        if (passData.hasExtraTextureInput)
+            builder.UseTexture(passData.extraTextureInput, AccessFlags.Read);
+
+        // Tell RenderGraph that this pass writes to destination.
+        builder.SetRenderAttachment(destination, 0);
+
+        // SetGlobalTexture modifies global shader state, so RenderGraph needs permission.
+        if (passData.hasExtraTextureInput)
+            builder.AllowGlobalStateModification(true);
+
+        // This function is executed later by RenderGraph.
+        builder.SetRenderFunc(static (BlitPassData data, RasterGraphContext context) =>
+        {
+            // Bind the optional second texture to the shader before blitting.
+            if (data.hasExtraTextureInput)
+                context.cmd.SetGlobalTexture(data.extraTextureId, data.extraTextureInput);
+
+            // Record a full-screen blit command.
+            Blitter.BlitTexture(
+                context.cmd,    // Command buffer to record into, provided by RenderGraph.
+                data.source,
+
+                new Vector4(1.0f, 1.0f, 0.0f, 0.0f),    // Source UV scale/bias: xy scale, zw offset.
+
+                data.material,
+                data.shaderPass
+            );
+        });
+    }
+
+    /// <summary>
+    /// Adds the compute pass that selects ASCII glyphs and writes the final ASCII image.
+    /// </summary>
+    /// <param name="renderGraph"></param>
+    /// <param name="sobel">Sobel edge texture.</param>
+    /// <param name="luminanceDownscaled">Downscaled luminance/color texture.</param>
+    /// <param name="result">Compute output texture.</param>
+    /// <param name="asciiTex">Imported fill ASCII atlas texture.</param>
+    /// <param name="edgeTex">Imported edge ASCII atlas texture.</param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    private void AddComputePass(
+        RenderGraph renderGraph,
+        TextureHandle sobel,
+        TextureHandle luminanceDownscaled,
+        TextureHandle result,
+        TextureHandle asciiTex,
+        TextureHandle edgeTex,
+        int width,
+        int height
+    )
+    {
+        using IComputeRenderGraphBuilder builder =
+            renderGraph.AddComputePass<ComputePassData>("RG_ASCII_ComputeGlyphs", out ComputePassData passData);
+
+        // Find the compute kernel once for this pass registration.
+        int kernel = settings.asciiCompute.FindKernel(ComputeKernelName);
+
+        // Store compute shader and kernel for execution.
+        passData.compute = settings.asciiCompute;
+        passData.kernel = kernel;
+
+        // Store all textures needed by the compute shader.
+        passData.sobel = sobel;
+        passData.luminance = luminanceDownscaled;
+        passData.result = result;
+        passData.asciiTex = asciiTex;
+        passData.edgeTex = edgeTex;
+
+        // Store debug toggles as ints because compute shader parameters use int values.
+        passData.viewUncompressed = settings.viewUncompressedEdges ? 1 : 0;
+        passData.debugEdges = settings.debugEdges ? 1 : 0;
+        passData.grid = settings.viewGrid ? 1 : 0;
+        passData.noEdges = settings.noEdges ? 1 : 0;
+        passData.noFill = settings.noFill ? 1 : 0;
+
+        // Store ASCII selection controls.
+        passData.edgeThreshold = settings.edgeThreshold;
+        passData.exposure = settings.exposure;
+        passData.attenuation = settings.attenuation;
+        passData.useDownscaledColor = settings.useDownscaledColor ? 1 : 0;
+
+        // Store output size for dispatch group count and compute shader bounds.
+        passData.width = width;
+        passData.height = height;
+
+        // Declare RenderGraph read dependencies.
+        builder.UseTexture(passData.sobel, AccessFlags.Read);
+        builder.UseTexture(passData.luminance, AccessFlags.Read);
+        builder.UseTexture(passData.asciiTex, AccessFlags.Read);
+        builder.UseTexture(passData.edgeTex, AccessFlags.Read);
+        builder.UseTexture(passData.result, AccessFlags.Write);
+        builder.SetRenderFunc(static (ComputePassData data, ComputeGraphContext context) =>
+        {
+            // Bind textures to compute shader.
+            context.cmd.SetComputeTextureParam(data.compute, data.kernel, "_SobelTex", data.sobel);
+            context.cmd.SetComputeTextureParam(data.compute, data.kernel, "_LuminanceTex", data.luminance);
+            context.cmd.SetComputeTextureParam(data.compute, data.kernel, "_Result", data.result);
+            context.cmd.SetComputeTextureParam(data.compute, data.kernel, "_AsciiTex", data.asciiTex);
+            context.cmd.SetComputeTextureParam(data.compute, data.kernel, "_EdgeAsciiTex", data.edgeTex);
+
+            // Bind debug / mode parameters.
+            context.cmd.SetComputeIntParam(data.compute, ViewUncompressedId, data.viewUncompressed);
+            context.cmd.SetComputeIntParam(data.compute, DebugEdgesId, data.debugEdges);
+            context.cmd.SetComputeIntParam(data.compute, GridId, data.grid);
+            context.cmd.SetComputeIntParam(data.compute, NoEdgesId, data.noEdges);
+            context.cmd.SetComputeIntParam(data.compute, NoFillId, data.noFill);
+            context.cmd.SetComputeIntParam(data.compute, EdgeThresholdId, data.edgeThreshold);
+
+            // Bind ASCII fill controls.
+            context.cmd.SetComputeFloatParam(data.compute, ExposureId, data.exposure);
+            context.cmd.SetComputeFloatParam(data.compute, AttenuationId, data.attenuation);
+            context.cmd.SetComputeIntParam(data.compute, UseDownscaledColorId, data.useDownscaledColor);
+
+            // Bind output dimensions.
+            context.cmd.SetComputeIntParam(data.compute, ResultWidthId, data.width);
+            context.cmd.SetComputeIntParam(data.compute, ResultHeightId, data.height);
+
+            // Dispatch one 8x8-thread group per 8x8 screen block.
+            int groupsX = Mathf.CeilToInt(data.width / 8.0f);
+            int groupsY = Mathf.CeilToInt(data.height / 8.0f);
+
+            context.cmd.DispatchCompute(data.compute, data.kernel, groupsX, groupsY, 1);
+        });
+    }
+
+
+
+
+
+    /*
+    ================================================================================
+    ASCII Render Pass data flow: Settings & TextureHandle from C# → Shader
+    ================================================================================
+
+    1. Settings（C#）→ Material → Shader
+
+    → RendererFeature.Create() 创建Material
+        asciiMaterial = CoreUtils.CreateEngineMaterial(asciiShader)
+
+    → RendererFeature (Inspector)
+        settings.stdev / settings.tau
+
+    → ASCIIRendererFeature.AddRenderPasses()
+        asciiPass.SetSettings(settings)
+
+    → ASCIIRenderPass.RecordRenderGraph()
+        Material封装Shader Property
+        UploadSettingsToMaterial()
+            material.SetFloat(ShaderProp("_Sigma"), settings.stdev)
+            material.SetFloat(ShaderProp("_Tau"), settings.tau)
+
+    → Blit Pass注册: AddFullscreenBlitPass(source, destination, shaderPass)
+        return builder out passData
+        参数进入PassData
+        passData.material = material
+        builder.SetRenderFunc(ExecuteBlit)
+
+    ================================================================================
+    2. TextureHandle（source → destination）→ Shader
+
+    → ASCIIRenderPass.RecordRenderGraph()
+        TextureHandle source
+        TextureHandle destination
+        
+        AddBlitPass(source, destination)
+            using builder out passData
+
+    → 参数进入PassData
+        passData.source = source
+        passData.destination = destination
+
+    → Builder声明依赖
+        builder.UseTexture(passData.source, Read)
+        builder.SetRenderAttachment(destination, 0)
+
+    → 执行阶段（SetRenderFunc）
+        data写入command buffer
+        AddBlitPass
+        {
+            Blitter.BlitTexture(context.cmd, data.source, ..., data.material)
+        }
+
+    **TextureHandle (Compute) 显式绑定
+        context.cmd.SetComputeTextureParam(
+            shader,
+            "_SourceTex",   // shader变量名
+            data.source     // TextureHandle
+        )
+
+    ================================================================================
+    ================================================================================
+    */
 }

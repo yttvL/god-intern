@@ -13,10 +13,10 @@ using UnityEngine.Rendering.Universal;
 // 4. Threshold DoG into a binary edge mask.
 // 5. Run Sobel on the mask to estimate gradient direction.
 // 6. Quantize direction into 4 edge types (vertical / horizontal / diagonals).
-// 7. For each ASCII cell vote for the dominant edge direction.
+// 7. For each ASCII cell, vote for the dominant edge direction.
 // =====================================================================================================
 
-public sealed class ASCIIRendererFeature : ScriptableRendererFeature
+public class ASCIIRendererFeature : ScriptableRendererFeature
 {
     [Serializable]
     public class ASCIISettings
@@ -150,7 +150,7 @@ public sealed class ASCIIRendererFeature : ScriptableRendererFeature
 
     protected override void Dispose(bool disposing)
     {
-        asciiPass?.Dispose();
+        asciiPass?.ReleaseAtlasRTHandles();
 
         DisposeMaterial();
         asciiPass = null;
