@@ -1,5 +1,43 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-4237691489788154775
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbcbd9dbdc62878469ad7cf111e2008d, type: 3}
+  m_Name: ASCIIRendererFeature
+  m_EditorClassIdentifier: Assembly-CSharp::ASCIIRendererFeature
+  m_Active: 1
+  asciiShader: {fileID: 4800000, guid: 9cd1d70ba35ba5640a4bc698ae0808c5, type: 3}
+  settings:
+    asciiCompute: {fileID: 7200000, guid: 14359804db0e6c24480de7abb342ab24, type: 3}
+    asciiTex: {fileID: 2800000, guid: dc7f992daf9a45942919b52471eb0bd3, type: 3}
+    edgeTex: {fileID: 2800000, guid: 745c52afaa520314eaeeff1336141735, type: 3}
+    gaussianKernelSize: 2
+    stdev: 1
+    stdevScale: 1.6
+    tau: 1
+    threshold: 0.005
+    invert: 0
+    edgeThreshold: 8
+    exposure: 0.43
+    attenuation: 1
+    useDownscaledColor: 0
+    viewDog: 0
+    viewSobel: 0
+    viewGrid: 0
+    debugEdges: 0
+    viewUncompressedEdges: 0
+    viewQuantizedSobel: 0
+    noEdges: 0
+    noFill: 0
+    renderPassInjectionPoint: 600
+    applyToSceneView: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26,8 +64,8 @@ MonoBehaviour:
     probeVolumeBlendStatesCS: {fileID: 7200000, guid: b9a23f869c4fd45f19c5ada54dd82176, type: 3}
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
-  - {fileID: 920875176812417566}
-  m_RendererFeatureMap: ad6b866f10d7b46c1e126124189bc70c
+  - {fileID: -4237691489788154775}
+  m_RendererFeatureMap: ad6b866f10d7b46c692c7bd30ab230c5
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -56,44 +94,6 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 0
---- !u!114 &920875176812417566
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dbcbd9dbdc62878469ad7cf111e2008d, type: 3}
-  m_Name: ASCIIRendererFeature
-  m_EditorClassIdentifier: Assembly-CSharp::ASCIIRendererFeature
-  m_Active: 1
-  asciiShader: {fileID: 4800000, guid: 9cd1d70ba35ba5640a4bc698ae0808c5, type: 3}
-  settings:
-    asciiCompute: {fileID: 7200000, guid: 14359804db0e6c24480de7abb342ab24, type: 3}
-    asciiTex: {fileID: 2800000, guid: dc7f992daf9a45942919b52471eb0bd3, type: 3}
-    edgeTex: {fileID: 2800000, guid: 745c52afaa520314eaeeff1336141735, type: 3}
-    gaussianKernelSize: 2
-    stdev: 1
-    stdevScale: 1.6
-    tau: 1
-    threshold: 0.005
-    invert: 0
-    edgeThreshold: 8
-    exposure: 1
-    attenuation: 1
-    useDownscaledColor: 1
-    viewDog: 0
-    viewSobel: 0
-    viewGrid: 0
-    debugEdges: 0
-    viewUncompressedEdges: 0
-    viewQuantizedSobel: 0
-    noEdges: 0
-    noFill: 0
-    renderPassInjectionPoint: 600
-    applyToSceneView: 1
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0
