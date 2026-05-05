@@ -16,9 +16,13 @@ int _EdgeThreshold;
 int _NoEdges;
 int _NoFill;
 int _UseDownscaledColor;
+int _UseSeparateEdgeColor;
 
 float _Exposure;
 float _Attenuation;
+
+float4 _FillColor;
+float4 _EdgeColor;
 
 int _ResultWidth;
 int _ResultHeight;
@@ -152,62 +156,78 @@ void CS_DrawEdges(uint3 id : SV_DISPATCHTHREADID, uint3 gid : SV_GROUPTHREADID)
     // 2. DebugEdges: show selected edge direction as color
     // 3. Normal ASCII: draw edge glyph or fill glyph
     //
-    // UseDownscaledColor only applies to normal ASCII output.
-    // Grid is applied last as an overlay.
+    // Color logic:
+    // 1. FillColor is always the base tint.
+    // 2. UseDownscaledColor multiplies FillColor by downscaled scene color.
+    // 3. Edge follows the same color unless UseSeparateEdgeColor is enabled.
+    // 4. Debug views ignore FillColor / EdgeColor.
+    // 5. Grid is applied last as an overlay.
     // -----------------------------------------------------------------------------
     
     if (_ViewUncompressed != 0)
     {
-    // Raw direction debug.
-    // Shows direction before final visual ASCII glyph/color logic.
+        // Raw direction debug.
+        // Shows direction before final visual ASCII glyph/color logic.
         ascii = float4(rawDebugEdgeCol, 1.0);
     }
     else if (_DebugEdges != 0)
     {
-    // Color-coded edge direction debug.
-    // 0 = red, 1 = green, 2 = cyan, 3 = yellow.
+        // Color-coded edge direction debug.
+        // 0 = red, 1 = green, 2 = cyan, 3 = yellow.
         ascii = float4(votedDebugEdgeCol, 1.0);
     }
     else
     {
-    // Normal ASCII rendering.
+        uint2 pixelInCell = id.xy % 8;
+        uint2 luminanceID = id.xy / 8;
+        
+        float3 baseColor = _FillColor.rgb;
+        
+        if (_UseDownscaledColor != 0)
+        {
+            float3 downscaledColor = saturate(_LuminanceTex[luminanceID].rgb);
+            baseColor *= downscaledColor;
+        }
+        
+        bool drewEdge = false;
+        
         if (commonEdgeIndex >= 0 && _NoEdges == 0)
         {
-        // Edge ASCII texture is arranged in 8x8 glyph blocks.
-        // Each edge direction starts at a different 8-pixel x offset.
             uint glyphIndex = (uint) (commonEdgeIndex + 1);
-            uint2 pixelInCell = gid.xy;
-
+            
             uint2 localUV;
             localUV.x = pixelInCell.x + glyphIndex * 8;
             localUV.y = pixelInCell.y;
-
+            
             ascii = _EdgeAsciiTex[localUV].rrrr;
+            
+            float3 edgeColor = baseColor;
+            
+            if (_UseSeparateEdgeColor != 0)
+            {
+                edgeColor = _EdgeColor.rgb;
+            }
+            
+            ascii.rgb *= edgeColor;
+            ascii.a = 1.0;
+            drewEdge = true;
         }
-        else if (_NoFill == 0)
+        
+        if (!drewEdge && _NoFill == 0)
         {
-        // Fill ASCII is selected by the downscaled packed luminance.
-            uint2 luminanceID = id.xy / 8;
-
             float luminance = _LuminanceTex[luminanceID].w;
             luminance = saturate(pow(abs(luminance * _Exposure), _Attenuation));
-
-        // Quantize luminance to 10 levels.
+            
+            // Quantize luminance to 10 levels.
             luminance = max(0.0, floor(luminance * 10.0) - 1.0) / 10.0;
-
+            
             uint2 localUV;
             localUV.x = (id.x % 8) + (uint) (luminance * 80.0);
             localUV.y = id.y % 8;
-
+            
             ascii = _AsciiTex[localUV].rrrr;
-        }
-
-    // Optional normal-mode colorization.
-    // Only colorize actual ASCII glyph output, not debug views.
-        if (_UseDownscaledColor != 0)
-        {
-            float3 downscaledColor = _LuminanceTex[id.xy / 8].rgb;
-            ascii.rgb *= downscaledColor;
+            ascii.rgb *= baseColor;
+            ascii.a = 1.0;
         }
     }
     

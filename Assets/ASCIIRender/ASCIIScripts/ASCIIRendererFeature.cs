@@ -78,6 +78,9 @@ public class ASCIIRendererFeature : ScriptableRendererFeature
         public float attenuation = 1.0f;
 
         public bool useDownscaledColor = false;
+        public Color fillColor = Color.white;
+        public bool useSeperateEdgeColor = false;
+        public Color edgeColor = Color.white;
 
         [Header("Debug Views")]
         public bool viewDog = false;

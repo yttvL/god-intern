@@ -25,9 +25,12 @@ MonoBehaviour:
     threshold: 0.005
     invert: 0
     edgeThreshold: 8
-    exposure: 0.43
+    exposure: 1
     attenuation: 1
     useDownscaledColor: 0
+    fillColor: {r: 0, g: 0.50980395, b: 0.28235295, a: 1}
+    useSeperateEdgeColor: 0
+    edgeColor: {r: 0.16910642, g: 0.426554, b: 0.4415095, a: 1}
     viewDog: 0
     viewSobel: 0
     viewGrid: 0
@@ -36,7 +39,7 @@ MonoBehaviour:
     viewQuantizedSobel: 0
     noEdges: 0
     noFill: 0
-    renderPassInjectionPoint: 600
+    renderPassInjectionPoint: 550
     applyToSceneView: 1
 --- !u!114 &11400000
 MonoBehaviour:

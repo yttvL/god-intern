@@ -37,10 +37,14 @@ public class ASCIIRenderPass : ScriptableRenderPass
     private static readonly int GridId = Shader.PropertyToID("_Grid");
     private static readonly int NoEdgesId = Shader.PropertyToID("_NoEdges");
     private static readonly int NoFillId = Shader.PropertyToID("_NoFill");
+
     private static readonly int EdgeThresholdId = Shader.PropertyToID("_EdgeThreshold");
     private static readonly int ExposureId = Shader.PropertyToID("_Exposure");
     private static readonly int AttenuationId = Shader.PropertyToID("_Attenuation");
     private static readonly int UseDownscaledColorId = Shader.PropertyToID("_UseDownscaledColor");
+    private static readonly int FillColorId = Shader.PropertyToID("_FillColor");
+    private static readonly int EdgeColorId = Shader.PropertyToID("_EdgeColor");
+    private static readonly int UseSeparateEdgeColorId = Shader.PropertyToID("_UseSeparateEdgeColor");
 
     private static readonly int ResultWidthId = Shader.PropertyToID("_ResultWidth");
     private static readonly int ResultHeightId = Shader.PropertyToID("_ResultHeight");
@@ -99,6 +103,9 @@ public class ASCIIRenderPass : ScriptableRenderPass
         public float exposure;
         public float attenuation;
         public int useDownscaledColor;
+        public int useSeparateEdgeColor;
+        public Vector4 fillColor;
+        public Vector4 edgeColor;
 
         public int width;
         public int height;
@@ -572,6 +579,9 @@ public class ASCIIRenderPass : ScriptableRenderPass
         passData.exposure = settings.exposure;
         passData.attenuation = settings.attenuation;
         passData.useDownscaledColor = settings.useDownscaledColor ? 1 : 0;
+        passData.useSeparateEdgeColor = settings.useSeperateEdgeColor ? 1 : 0;
+        passData.fillColor = settings.fillColor;
+        passData.edgeColor = settings.edgeColor;
 
         // Store output size for dispatch group count and compute shader bounds.
         passData.width = width;
@@ -604,6 +614,9 @@ public class ASCIIRenderPass : ScriptableRenderPass
             context.cmd.SetComputeFloatParam(data.compute, ExposureId, data.exposure);
             context.cmd.SetComputeFloatParam(data.compute, AttenuationId, data.attenuation);
             context.cmd.SetComputeIntParam(data.compute, UseDownscaledColorId, data.useDownscaledColor);
+            context.cmd.SetComputeIntParam(data.compute, UseSeparateEdgeColorId, data.useSeparateEdgeColor);
+            context.cmd.SetComputeVectorParam(data.compute, FillColorId, data.fillColor);
+            context.cmd.SetComputeVectorParam(data.compute, EdgeColorId, data.edgeColor);
 
             // Bind output dimensions.
             context.cmd.SetComputeIntParam(data.compute, ResultWidthId, data.width);

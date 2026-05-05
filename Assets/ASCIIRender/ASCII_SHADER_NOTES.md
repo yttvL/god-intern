@@ -1,5 +1,27 @@
 # ASCII Shader Notes
 
+## Update 2026-05-05
+
+1. Luminance 对比度异常（Compute阶段）
+LuminanceExtract pass 时明暗对比正常  
+进入 Compute（读取 downscaled luminance）后整体对比度显著下降，接近全灰  
+猜测：问题不在 URP tonemapping 而在 downscaled luminance 本身已被压平  
+
+2. Frame Debugger 中 Compute 表现异常
+ComputeGlyphs 在 Frame Debugger 中出现两次（灰度图 + 最终结果）  
+
+### NEW FEATURES
+
+1. Fill Color
+默认白色用于整体 ASCII tint
+可与 downscaled color 叠乘
+
+2. Separate Edge Color
+可选开关
+开启后 edge 使用独立颜色
+
+---
+
 ## Update 2026-05-04
 
 ### BUGS
