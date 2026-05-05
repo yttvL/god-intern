@@ -3,11 +3,16 @@ Shader "Hidden/ASCIIURP"
     Properties
     {
         _AsciiTex("ASCII Texture", 2D) = "white" {}
+
+        ////
+        _DepthEpsilon("Depth Epsilon", Float) = 0.0001
+        _OverlayOpacity("Overlay Opacity", Range(0, 1)) = 1
     }
 
     SubShader
     {
         Tags{ "RenderType"="Opaque" }
+
         ZWrite Off
         ZTest Always
         Cull Off
@@ -24,6 +29,9 @@ Shader "Hidden/ASCIIURP"
         // SAMPLER(sampler_PointClamp);
         // float4 _BlitTexture_TexelSize;
 
+        TEXTURE2D_X(_SceneDepthTex);
+        TEXTURE2D_X(_ObjectDepthTex);
+
         float _Sigma;
         float _K;
         float _Tau;
@@ -32,9 +40,19 @@ Shader "Hidden/ASCIIURP"
         int _GaussianKernelSize;
         int _Invert;
 
+        ////
+        float _DepthEpsilon;
+        float _OverlayOpacity;
+
         float ASCIILuminance(float3 color)
         {
             return dot(color, float3(0.299, 0.587, 0.114));
+        }
+
+        float3 ReinhardToneMap(float3 color)
+        {
+            color = max(color, 0.0);
+            return color / (1.0 + color);
         }
 
         float Gaussian(float sigma, float pos)
@@ -51,6 +69,18 @@ Shader "Hidden/ASCIIURP"
         float4 SampleLuminancePoint(float2 uv)
         {
             return SAMPLE_TEXTURE2D_X(_LuminanceTex, sampler_PointClamp, uv);
+        }
+
+        float SampleSceneEyeDepth(float2 uv)
+        {
+            float rawDepth = SAMPLE_TEXTURE2D_X(_SceneDepthTex, sampler_PointClamp, uv).r;
+            return LinearEyeDepth(rawDepth, _ZBufferParams);
+        }
+
+        float SampleObjectEyeDepth(float2 uv)
+        {
+            float rawDepth = SAMPLE_TEXTURE2D_X(_ObjectDepthTex, sampler_PointClamp, uv).r;
+            return LinearEyeDepth(rawDepth, _ZBufferParams);
         }
 
         ENDHLSL
@@ -73,7 +103,7 @@ Shader "Hidden/ASCIIURP"
             ENDHLSL
         }
 
-        // Pass 1: Luminance
+        // Pass 1: Luminance.xxxx
         Pass
         {
             Name "Luminance"
@@ -85,14 +115,20 @@ Shader "Hidden/ASCIIURP"
 
             float4 Frag (Varyings input) : SV_Target
             {
-                float4 col = saturate(SampleBlitPoint(input.texcoord));
-                return ASCIILuminance(col.rgb);
+                float4 col = SampleBlitPoint(input.texcoord);
+                float3 toneMapped = ReinhardToneMap(col.rgb);
+
+                float l = ASCIILuminance(col.rgb);
+                return (l, l, l, l);
             }
             
             ENDHLSL
         }
 
         // Pass 2: Pack Luminance
+        // input1: camera color
+        // input2: Luminance
+        // output: ping
         Pass
         {
             Name "Pack Luminance"
@@ -256,6 +292,70 @@ Shader "Hidden/ASCIIURP"
                 return float4(max(magnitude, 0), theta, validTheta, 0);
             }
             
+            ENDHLSL
+        }
+
+
+        // =================================================================================
+
+        // Pass 7: Visible Object Depth Clip
+        // Input _BlitTexture = ObjectColorRT
+        // Extra _SceneDepthTex = depth of scene without ASCII object
+        // Extra _ObjectDepthTex = depth of ASCII object
+        Pass
+        {
+            Name "Visible Object Depth Clip"
+
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            float4 Frag(Varyings input) : SV_Target
+            {
+                float2 uv = input.texcoord;
+
+                float4 objectColor = SampleBlitPoint(uv);
+
+                // ObjectColorRT should be cleared to alpha 0 before rendering object.
+                // Pixels with no object should stay transparent.
+                if (objectColor.a <= 0.001)
+                    return float4(0, 0, 0, 0);
+
+                float sceneEyeDepth = SampleSceneEyeDepth(uv);
+                float objectEyeDepth = SampleObjectEyeDepth(uv);
+
+                // Visible when object is closer than the already-rendered normal scene.
+                float visible = objectEyeDepth <= sceneEyeDepth + _DepthEpsilon ? 1.0 : 0.0;
+
+                return float4(objectColor.rgb * visible, objectColor.a * visible);
+            }
+            ENDHLSL
+        }
+
+        // Pass 8: Transparent ASCII Composite
+        // Input _BlitTexture = TransparentASCIIObjectRT
+        // Destination = camera color / BaseColorRT
+        Pass
+        {
+            Name "Transparent ASCII Composite"
+
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite Off
+            ZTest Always
+            Cull Off
+
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            float4 Frag(Varyings input) : SV_Target
+            {
+                float4 ascii = SampleBlitPoint(input.texcoord);
+
+                ascii.a *= _OverlayOpacity;
+
+                return ascii;
+            }
             ENDHLSL
         }
     }

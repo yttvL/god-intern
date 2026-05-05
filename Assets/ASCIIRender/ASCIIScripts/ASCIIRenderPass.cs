@@ -323,7 +323,8 @@ public class ASCIIRenderPass : ScriptableRenderPass
             asciiTex,
             edgeTex,
             width,
-            height
+            height,
+            "RG_ASCIICompute_AtlasMapping"
         );
 
         TextureHandle finalSource = asciiResult;
@@ -334,7 +335,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
         if (settings.viewSobel)
             finalSource = sobel;
 
-        AddBlitPass(renderGraph, finalSource, cameraColor, CopyPass, "RG_ASCII_ComputeGlyphs");
+        AddBlitPass(renderGraph, finalSource, cameraColor, CopyPass, "RG_ASCII_CopyComputeToCamera");
     }
 
 
@@ -541,11 +542,12 @@ public class ASCIIRenderPass : ScriptableRenderPass
         TextureHandle asciiTex,
         TextureHandle edgeTex,
         int width,
-        int height
+        int height,
+        string passName
     )
     {
         using IComputeRenderGraphBuilder builder =
-            renderGraph.AddComputePass<ComputePassData>("RG_ASCII_ComputeGlyphs", out ComputePassData passData);
+            renderGraph.AddComputePass<ComputePassData>(passName, out ComputePassData passData);
 
         // Find the compute kernel once for this pass registration.
         int kernel = settings.asciiCompute.FindKernel(ComputeKernelName);
