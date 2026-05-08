@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbcbd9dbdc62878469ad7cf111e2008d, type: 3}
   m_Name: ASCIIRendererFeature
   m_EditorClassIdentifier: Assembly-CSharp::ASCIIRendererFeature
-  m_Active: 1
+  m_Active: 0
   asciiShader: {fileID: 4800000, guid: 9cd1d70ba35ba5640a4bc698ae0808c5, type: 3}
   settings:
     asciiCompute: {fileID: 7200000, guid: 14359804db0e6c24480de7abb342ab24, type: 3}
@@ -28,9 +28,9 @@ MonoBehaviour:
     exposure: 1.16
     attenuation: 1.59
     useDownscaledColor: 1
-    fillColor: {r: 0.2729321, g: 0.754717, b: 0.5397668, a: 1}
+    fillColor: {r: 0.27450982, g: 0.7529412, b: 0.5411765, a: 1}
     useSeperateEdgeColor: 0
-    edgeColor: {r: 0.16910642, g: 0.426554, b: 0.4415095, a: 1}
+    edgeColor: {r: 1, g: 0, b: 0, a: 1}
     viewDog: 0
     viewSobel: 0
     viewGrid: 0

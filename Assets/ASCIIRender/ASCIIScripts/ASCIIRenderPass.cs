@@ -203,6 +203,8 @@ public class ASCIIRenderPass : ScriptableRenderPass
         TextureHandle asciiTex = renderGraph.ImportTexture(asciiTexRTHandle);
         TextureHandle edgeTex = renderGraph.ImportTexture(edgeTexRTHandle);
 
+        GraphicsFormat signedFormat = GraphicsFormat.R16G16B16A16_SFloat;
+
         TextureHandle luminance = CreateRenderGraphTexture(
             renderGraph,
             fullDesc,
@@ -217,7 +219,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
             renderGraph,
             fullDesc,
             "_ASCII_PingTex",
-            fullDesc.graphicsFormat,
+            signedFormat,
             width,
             height,
             false
@@ -227,7 +229,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
             renderGraph,
             fullDesc,
             "_ASCII_DoGTex",
-            fullDesc.graphicsFormat,
+            signedFormat,
             width,
             height,
             false
@@ -237,7 +239,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
             renderGraph,
             fullDesc,
             "_ASCII_SobelTex",
-            fullDesc.graphicsFormat,
+            signedFormat,
             width,
             height,
             false
