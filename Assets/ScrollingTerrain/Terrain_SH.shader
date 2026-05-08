@@ -59,7 +59,13 @@ Shader "Custom/Terrain"
         {
             "RenderPipeline"="UniversalPipeline"
             "RenderType"="Opaque"
-            "Queue"="Geometry"
+            "Queue"="Geometry+15"
+        }
+
+        Stencil
+        {
+            Ref 1
+            Comp Equal
         }
 
         Pass
