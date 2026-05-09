@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eae5bd4a9f66224382841b669fe33e2, type: 3}
+  m_Name: asciiGreen
+  m_EditorClassIdentifier: Assembly-CSharp::ASCIIPreset
+  gaussianKernelSize: 2
+  stdev: 1
+  stdevScale: 1.6
+  tau: 1
+  threshold: 0.0016
+  invert: 0
+  edgeThreshold: 8
+  exposure: 1.16
+  attenuation: 1.59
+  useDownscaledColor: 1
+  fillColor: {r: 0.27450982, g: 0.7529412, b: 0.5411765, a: 1}
+  useSeperateEdgeColor: 1
+  edgeColor: {r: 0.090196066, g: 0.38039216, b: 0.23529412, a: 1}
+  viewDog: 0
+  viewSobel: 0
+  viewGrid: 0
+  debugEdges: 0
+  viewUncompressedEdges: 0
+  viewQuantizedSobel: 0
+  noEdges: 0
+  noFill: 0
+  renderPassInjectionPoint: 600
+  applyToSceneView: 1

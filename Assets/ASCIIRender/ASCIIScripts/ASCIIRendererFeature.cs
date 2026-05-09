@@ -103,6 +103,9 @@ public class ASCIIRendererFeature : ScriptableRendererFeature
     private Shader asciiShader;
 
     [SerializeField]
+    private ASCIIPreset preset;
+
+    [SerializeField]
     private ASCIISettings settings = new ASCIISettings();
 
     private Material asciiMaterial;
@@ -166,5 +169,82 @@ public class ASCIIRendererFeature : ScriptableRendererFeature
             CoreUtils.Destroy(asciiMaterial);
             asciiMaterial = null;
         }
+    }
+
+
+    public void ApplyPresetToSettings()
+    {
+        if (preset == null || settings == null)
+            return;
+
+        settings.gaussianKernelSize = preset.gaussianKernelSize;
+        settings.stdev = preset.stdev;
+        settings.stdevScale = preset.stdevScale;
+        settings.tau = preset.tau;
+        settings.threshold = preset.threshold;
+        settings.invert = preset.invert;
+
+        settings.edgeThreshold = preset.edgeThreshold;
+        settings.exposure = preset.exposure;
+        settings.attenuation = preset.attenuation;
+
+        settings.useDownscaledColor = preset.useDownscaledColor;
+        settings.fillColor = preset.fillColor;
+
+        settings.useSeperateEdgeColor = preset.useSeperateEdgeColor;
+        settings.edgeColor = preset.edgeColor;
+
+        settings.viewDog = preset.viewDog;
+        settings.viewSobel = preset.viewSobel;
+        settings.viewGrid = preset.viewGrid;
+        settings.debugEdges = preset.debugEdges;
+        settings.viewUncompressedEdges = preset.viewUncompressedEdges;
+        settings.viewQuantizedSobel = preset.viewQuantizedSobel;
+        settings.noEdges = preset.noEdges;
+        settings.noFill = preset.noFill;
+
+        settings.renderPassInjectionPoint = preset.renderPassInjectionPoint;
+        settings.applyToSceneView = preset.applyToSceneView;
+
+        Create();
+    }
+
+    public void SaveSettingsToPreset()
+    {
+        if (preset == null || settings == null)
+            return;
+
+        preset.gaussianKernelSize = settings.gaussianKernelSize;
+        preset.stdev = settings.stdev;
+        preset.stdevScale = settings.stdevScale;
+        preset.tau = settings.tau;
+        preset.threshold = settings.threshold;
+        preset.invert = settings.invert;
+
+        preset.edgeThreshold = settings.edgeThreshold;
+        preset.exposure = settings.exposure;
+        preset.attenuation = settings.attenuation;
+
+        preset.useDownscaledColor = settings.useDownscaledColor;
+        preset.fillColor = settings.fillColor;
+
+        preset.useSeperateEdgeColor = settings.useSeperateEdgeColor;
+        preset.edgeColor = settings.edgeColor;
+
+        preset.viewDog = settings.viewDog;
+        preset.viewSobel = settings.viewSobel;
+        preset.viewGrid = settings.viewGrid;
+        preset.debugEdges = settings.debugEdges;
+        preset.viewUncompressedEdges = settings.viewUncompressedEdges;
+        preset.viewQuantizedSobel = settings.viewQuantizedSobel;
+        preset.noEdges = settings.noEdges;
+        preset.noFill = settings.noFill;
+
+        preset.renderPassInjectionPoint = settings.renderPassInjectionPoint;
+        preset.applyToSceneView = settings.applyToSceneView;
+
+    #if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(preset);
+    #endif
     }
 }

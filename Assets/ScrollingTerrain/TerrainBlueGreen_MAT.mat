@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Terrain_MAT
+  m_Name: TerrainBlueGreen_MAT
   m_Shader: {fileID: 4800000, guid: 1123c44687709da439c45478147723a8, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -37,6 +37,7 @@ Material:
     - _Lacunarity: 2
     - _LightStrength: 0.35
     - _NoiseScale: 1
+    - _NormalSampleOffset: 0.01
     - _ObjectTopY: 0.5
     - _Octaves: 4
     - _Persistence: 0.5
@@ -47,6 +48,10 @@ Material:
     - _SideGradientTopY: 2.78
     - _SideTopY: 0.5
     - _Speed: 2.21
+    - _StencilComp: 8
+    - _TopLightSoftness: 0.001
+    - _TopLightStrength: 0.7
+    - _TopLightThreshold: 0.55
     - _TopNoisePower: 3.42
     - _TopNormalBlend: 0.15
     - _TopNormalThreshold: 0.45
@@ -56,15 +61,17 @@ Material:
     - _BottomColor: {r: 1, g: 1, b: 1, a: 1}
     - _ColorBottom: {r: 0, g: 0, b: 0, a: 1}
     - _ColorTop: {r: 1, g: 1, b: 1, a: 1}
-    - _CrustColor: {r: 0.4132787, g: 0.7341625, b: 0.8867924, a: 1}
-    - _LightDirection: {r: -0.07, g: 0, b: 1, a: 0}
+    - _CrustColor: {r: 0.41327867, g: 0.7341625, b: 0.8867924, a: 1}
+    - _LightDirection: {r: -0.2, g: 1, b: 1, a: 0}
     - _ScrollDirection: {r: 0, g: 1, b: 0, a: 0}
     - _SeedOffset: {r: 13.1, g: 27.7, b: 0, a: 0}
-    - _SideBaseColor: {r: 0.43921572, g: 0.5568628, b: 0.5294118, a: 1}
+    - _SideBaseColor: {r: 0.4392157, g: 0.5568628, b: 0.5294118, a: 1}
     - _SideBottomColor: {r: 0.87358487, g: 1, b: 0.91547984, a: 1}
     - _SideTopColor: {r: 0.54999995, g: 0.7, b: 0.7, a: 1}
     - _TopColor: {r: 0.058504775, g: 0.29485255, b: 0.3132075, a: 1}
-    - _TopHighColor: {r: 0.93962264, g: 0.7001639, b: 0.43789956, a: 1}
-    - _TopLowColor: {r: 0.04818083, g: 0.31584752, b: 0.381132, a: 1}
+    - _TopHighColor: {r: 0.93962264, g: 0.7001639, b: 0.43789953, a: 1}
+    - _TopLightColor: {r: 1, g: 0.9019608, b: 0.6509804, a: 1}
+    - _TopLowColor: {r: 0.048180804, g: 0.3158475, b: 0.38113198, a: 1}
+    - _TopShadowColor: {r: 0.54901963, g: 0.6509804, b: 0.7490196, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

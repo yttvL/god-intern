@@ -4,6 +4,9 @@ Shader "Custom/Screen"
     {
         [MainColor] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
+
+        [Enum(UnityEngine.Rendering.StencilOp)]
+        _StencilPass ("Stencil Pass", Float) = 2
     }
 
     SubShader
@@ -15,7 +18,7 @@ Shader "Custom/Screen"
         {
             Ref 1
             Comp Always
-            Pass Replace
+            Pass [_StencilPass]
         }
 
         Pass

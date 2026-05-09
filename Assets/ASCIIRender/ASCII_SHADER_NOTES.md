@@ -1,5 +1,16 @@
 # ASCII Shader Notes
 
+## Update 2026-05-08
+
+1. ASCII Preset Workflow
+新增 RenderFeature preset 保存/恢复流程  
+使用 ScriptableObject 保存 ASCII visual settings  
+可直接在 RenderFeature Inspector 中：
+- Save Render Feature -> Preset
+- Apply Preset -> Render Feature
+
+---
+
 ## Update 2026-05-07
 
 ### BUG FIX
