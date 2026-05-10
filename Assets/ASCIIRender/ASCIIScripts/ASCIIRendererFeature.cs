@@ -18,6 +18,12 @@ using UnityEngine.Rendering.Universal;
 
 public class ASCIIRendererFeature : ScriptableRendererFeature
 {
+    public enum ASCIIRenderMode
+    {
+        Fullscreen = 0,
+        StencilComposite = 1
+    }
+
     [Serializable]
     public class ASCIISettings
     {
@@ -91,6 +97,13 @@ public class ASCIIRendererFeature : ScriptableRendererFeature
         public bool viewQuantizedSobel = false;
         public bool noEdges = false;
         public bool noFill = false;
+
+        [Header("Render Mode")]
+        [Tooltip("Fullscreen: copy ASCII result over the whole camera color.\nStencilComposite: use stencil to keep normal rendering inside stencil Ref and show ASCII outside it.")]
+        public ASCIIRenderMode renderMode = ASCIIRenderMode.Fullscreen;
+
+        [Tooltip("Stencil reference value written by the stencil writer.")]
+        public int stencilRef = 1;
 
         [Header("Injection")]
         public RenderPassEvent renderPassInjectionPoint = RenderPassEvent.AfterRenderingPostProcessing;

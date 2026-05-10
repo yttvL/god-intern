@@ -14,25 +14,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ASCIIRendererFeature
   m_Active: 1
   asciiShader: {fileID: 4800000, guid: 9cd1d70ba35ba5640a4bc698ae0808c5, type: 3}
-  preset: {fileID: 11400000, guid: 7d79b0a343651184b9689bba550cf376, type: 2}
+  preset: {fileID: 11400000, guid: e7f3698988c6a7442af44e6f1cc6ee90, type: 2}
   settings:
     asciiCompute: {fileID: 7200000, guid: 14359804db0e6c24480de7abb342ab24, type: 3}
-    asciiTex: {fileID: 2800000, guid: dc7f992daf9a45942919b52471eb0bd3, type: 3}
+    asciiTex: {fileID: 2800000, guid: 8a753ebb1d02a0944961d46d787454b9, type: 3}
     edgeTex: {fileID: 2800000, guid: 745c52afaa520314eaeeff1336141735, type: 3}
     gaussianKernelSize: 2
-    stdev: 0.45
-    stdevScale: 5
-    tau: 0.98
+    stdev: 1
+    stdevScale: 1.6
+    tau: 1
     threshold: 0.0016
     invert: 0
     edgeThreshold: 8
     exposure: 1.16
     attenuation: 1.59
-    useDownscaledColor: 0
+    useDownscaledColor: 1
     fillColor: {r: 0.27450982, g: 0.7529412, b: 0.5411765, a: 1}
-    useSeperateEdgeColor: 0
-    edgeColor: {r: 0.4156863, g: 0.84313726, b: 0.6249052, a: 1}
-    viewDog: 1
+    useSeperateEdgeColor: 1
+    edgeColor: {r: 0.090196066, g: 0.38039216, b: 0.23529412, a: 1}
+    viewDog: 0
     viewSobel: 0
     viewGrid: 0
     debugEdges: 0
@@ -40,8 +40,10 @@ MonoBehaviour:
     viewQuantizedSobel: 0
     noEdges: 0
     noFill: 0
+    renderMode: 1
+    stencilRef: 1
     renderPassInjectionPoint: 600
-    applyToSceneView: 0
+    applyToSceneView: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

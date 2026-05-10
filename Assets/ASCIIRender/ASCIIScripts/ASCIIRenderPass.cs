@@ -18,12 +18,15 @@ public class ASCIIRenderPass : ScriptableRenderPass
     private const int VerticalBlurDifferencePass = 4;
     private const int SobelHorizontalPass = 5;
     private const int SobelVerticalPass = 6;
+    private const int CopyOutsideStencilPass = 9;
+    private const int CopyInsideStencilPass = 10;
 
     private const string ComputeKernelName = "CS_DrawEdges";
 
     // Cached shader property IDs.
     private static readonly int AsciiTexId = Shader.PropertyToID("_AsciiTex");
     private static readonly int LuminanceTexId = Shader.PropertyToID("_LuminanceTex");
+    private static readonly int StencilRefId = Shader.PropertyToID("_StencilRef");
 
     private static readonly int SigmaId = Shader.PropertyToID("_Sigma");
     private static readonly int KId = Shader.PropertyToID("_K");
@@ -203,7 +206,19 @@ public class ASCIIRenderPass : ScriptableRenderPass
         TextureHandle asciiTex = renderGraph.ImportTexture(asciiTexRTHandle);
         TextureHandle edgeTex = renderGraph.ImportTexture(edgeTexRTHandle);
 
+        TextureHandle cameraDepth = resourceData.activeDepthTexture;
+
         GraphicsFormat signedFormat = GraphicsFormat.R16G16B16A16_SFloat;
+
+        TextureHandle normalSceneCopy = CreateRenderGraphTexture(
+            renderGraph,
+            fullDesc,
+            "_ASCII_NormalSceneCopyTex",
+            fullDesc.graphicsFormat,
+            width,
+            height,
+            false
+        );
 
         TextureHandle luminance = CreateRenderGraphTexture(
             renderGraph,
@@ -285,6 +300,8 @@ public class ASCIIRenderPass : ScriptableRenderPass
             true
         );
 
+        AddBlitPass(renderGraph, cameraColor, normalSceneCopy, CopyPass, "RG_ASCII_CopyNormalSceneBeforeASCII");
+
         AddBlitPass(renderGraph, cameraColor, luminance, LuminancePass, "RG_ASCII_LuminanceExtract");
 
         AddBlitPass(renderGraph, luminance, ping, HorizontalBlurPass, "RG_ASCII_GaussianBlurHorizontal");
@@ -337,7 +354,32 @@ public class ASCIIRenderPass : ScriptableRenderPass
         if (settings.viewSobel)
             finalSource = sobel;
 
-        AddBlitPass(renderGraph, finalSource, cameraColor, CopyPass, "RG_ASCII_CopyComputeToCamera");
+        if (settings.renderMode == ASCIIRendererFeature.ASCIIRenderMode.StencilComposite)
+        {
+            // First draw ASCII only where stencil != _StencilRef.
+            AddBlitPassWithOptionalDepthStencil(
+                renderGraph,
+                finalSource,
+                cameraColor,
+                cameraDepth,
+                CopyOutsideStencilPass,
+                "RG_ASCII_CopyASCIIOutsideStencil"
+            );
+
+            // Then restore the original normal scene only where stencil == _StencilRef.
+            AddBlitPassWithOptionalDepthStencil(
+                renderGraph,
+                normalSceneCopy,
+                cameraColor,
+                cameraDepth,
+                CopyInsideStencilPass,
+                "RG_ASCII_RestoreNormalInsideStencil"
+            );
+        }
+        else
+        {
+            AddBlitPass(renderGraph, finalSource, cameraColor, CopyPass, "RG_ASCII_CopyComputeToCamera");
+        }
     }
 
 
@@ -519,6 +561,48 @@ public class ASCIIRenderPass : ScriptableRenderPass
 
                 new Vector4(1.0f, 1.0f, 0.0f, 0.0f),    // Source UV scale/bias: xy scale, zw offset.
 
+                data.material,
+                data.shaderPass
+            );
+        });
+    }
+
+    /// <summary>
+    /// Adds a full-screen blit pass that can also bind the camera depth/stencil texture.
+    /// The stencil test in the shader pass only has a stencil buffer to test against when
+    /// the current camera depth/stencil attachment is bound to this raster pass.
+    /// </summary>
+    private void AddBlitPassWithOptionalDepthStencil(
+        RenderGraph renderGraph,
+        TextureHandle source,
+        TextureHandle destination,
+        TextureHandle depthStencil,
+        int shaderPass,
+        string passName
+    )
+    {
+        using IRasterRenderGraphBuilder builder =
+            renderGraph.AddRasterRenderPass<BlitPassData>(passName, out BlitPassData passData);
+
+        passData.source = source;
+        passData.extraTextureInput = TextureHandle.nullHandle;
+        passData.extraTextureId = 0;
+        passData.hasExtraTextureInput = false;
+        passData.material = material;
+        passData.shaderPass = shaderPass;
+
+        builder.UseTexture(passData.source, AccessFlags.Read);
+        builder.SetRenderAttachment(destination, 0);
+
+        if (depthStencil.IsValid())
+            builder.SetRenderAttachmentDepth(depthStencil, AccessFlags.Read);
+
+        builder.SetRenderFunc(static (BlitPassData data, RasterGraphContext context) =>
+        {
+            Blitter.BlitTexture(
+                context.cmd,
+                data.source,
+                new Vector4(1.0f, 1.0f, 0.0f, 0.0f),
                 data.material,
                 data.shaderPass
             );

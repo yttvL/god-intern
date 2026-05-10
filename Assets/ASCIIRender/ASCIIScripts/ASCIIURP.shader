@@ -3,10 +3,11 @@ Shader "Hidden/ASCIIURP"
     Properties
     {
         _AsciiTex("ASCII Texture", 2D) = "white" {}
+        _StencilRef("Stencil Ref", Integer) = 1
 
         ////
-        _DepthEpsilon("Depth Epsilon", Float) = 0.0001
-        _OverlayOpacity("Overlay Opacity", Range(0, 1)) = 1
+        // _DepthEpsilon("Depth Epsilon", Float) = 0.0001
+        // _OverlayOpacity("Overlay Opacity", Range(0, 1)) = 1
     }
 
     SubShader
@@ -41,8 +42,8 @@ Shader "Hidden/ASCIIURP"
         int _Invert;
 
         ////
-        float _DepthEpsilon;
-        float _OverlayOpacity;
+        // float _DepthEpsilon;
+        // float _OverlayOpacity;
 
         float ASCIILuminance(float3 color)
         {
@@ -355,6 +356,54 @@ Shader "Hidden/ASCIIURP"
                 ascii.a *= _OverlayOpacity;
 
                 return ascii;
+            }
+            ENDHLSL
+        }
+
+        // Pass 9: Copy only outside stencil.
+        // Used by StencilComposite mode: ASCII is visible where stencil != _StencilRef.
+        Pass
+        {
+            Name "Copy Outside Stencil"
+
+            Stencil
+            {
+                Ref [_StencilRef]
+                Comp NotEqual
+                Pass Keep
+            }
+
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            float4 Frag(Varyings input) : SV_Target
+            {
+                return SampleBlitPoint(input.texcoord);
+            }
+            ENDHLSL
+        }
+
+        // Pass 10: Copy only inside stencil.
+        // Used by StencilComposite mode: normal scene is restored where stencil == _StencilRef.
+        Pass
+        {
+            Name "Copy Inside Stencil"
+
+            Stencil
+            {
+                Ref [_StencilRef]
+                Comp Equal
+                Pass Keep
+            }
+
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            float4 Frag(Varyings input) : SV_Target
+            {
+                return SampleBlitPoint(input.texcoord);
             }
             ENDHLSL
         }
