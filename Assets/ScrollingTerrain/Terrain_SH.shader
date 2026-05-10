@@ -169,6 +169,7 @@ Shader "Custom/Terrain"
             float _TopNormalBlend;
 
             float4 _LightDirection;
+            float4 _LightPositionWS;
             float _LightStrength;
             float _Ambient;
 
@@ -335,10 +336,12 @@ Shader "Custom/Terrain"
                     );
 
                 // top toon from fake lighting
-                float3 lightDir = normalize(_LightDirection.xyz);
+                float3 sideLightDirWS = normalize(_LightDirection.xyz);
+                float3 topLightDirWS = normalize(_LightPositionWS.xyz - input.positionWS);
+
                 float3 terrainNormalWS = normalize(input.terrainNormalWS);
 
-                float topNdotL = saturate(dot(terrainNormalWS, lightDir));
+                float topNdotL = saturate(dot(terrainNormalWS, topLightDirWS));
 
                 float topLightBand =
                 smoothstep(
@@ -403,7 +406,7 @@ Shader "Custom/Terrain"
                     );
 
                 // Fake lighting
-                float ndotl = saturate(dot(normalWS, lightDir));
+                float ndotl = saturate(dot(normalWS, sideLightDirWS));
                 float lighting = _Ambient + ndotl * _LightStrength;
 
                 // Final

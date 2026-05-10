@@ -17,7 +17,7 @@ MonoBehaviour:
   preset: {fileID: 11400000, guid: 6f8999b03fff11143b38bbb63653a889, type: 2}
   settings:
     asciiCompute: {fileID: 7200000, guid: 14359804db0e6c24480de7abb342ab24, type: 3}
-    asciiTex: {fileID: 2800000, guid: 0bc4b4eb40fd6ed489034afcbd90d446, type: 3}
+    asciiTex: {fileID: 2800000, guid: dc7f992daf9a45942919b52471eb0bd3, type: 3}
     edgeTex: {fileID: 2800000, guid: 745c52afaa520314eaeeff1336141735, type: 3}
     gaussianKernelSize: 2
     stdev: 1
@@ -26,8 +26,8 @@ MonoBehaviour:
     threshold: 0.0016
     invert: 0
     edgeThreshold: 8
-    exposure: 1.16
-    attenuation: 1.59
+    exposure: 2.55
+    attenuation: 6.8
     useDownscaledColor: 0
     fillColor: {r: 0.17604129, g: 0.4339623, b: 0.31980056, a: 1}
     useSeperateEdgeColor: 0

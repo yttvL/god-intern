@@ -28,8 +28,26 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
-    m_Floats: []
+    m_Floats:
+    - _BackgroundIntensity: 1
+    - _DistanceFade: 0.19
+    - _GridHeight: -2
+    - _GridIntensity: 2
+    - _GridScale: 1
+    - _HorizonFade: 0.7
+    - _LineWidth: 0.014
+    - _MajorGridEvery: 3
+    - _MajorLineWidth: 0.005
+    - _PulseSpeed: 0
+    - _PulseStrength: 0
+    - _ScrollSpeedX: 1
+    - _ScrollSpeedZ: 0
+    - _StencilComp: 3
+    - _StencilRef: 1
     m_Colors:
+    - _BackgroundColor: {r: 0, g: 0, b: 0, a: 1}
     - _BaseColor: {r: 0, g: 0, b: 0, a: 1}
+    - _GridColor: {r: 0.052963674, g: 0.4237094, b: 0.52963674, a: 1}
+    - _MajorGridColor: {r: 2.1899202, g: 3.5494123, b: 3.5494123, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

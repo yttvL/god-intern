@@ -41,7 +41,7 @@ Material:
     - _ObjectTopY: 0.5
     - _Octaves: 5
     - _Persistence: 0.5
-    - _ScrollSpeed: 0.3
+    - _ScrollSpeed: 0.4
     - _SideBaseY: -0.5
     - _SideColorDropRange: 0.3
     - _SideColorPower: 1.5
@@ -51,8 +51,8 @@ Material:
     - _StencilComp: 3
     - _TopLightSoftness: 0.3
     - _TopLightStrength: 0.7
-    - _TopLightThreshold: 0.05
-    - _TopNoisePower: 1.83
+    - _TopLightThreshold: 0.5
+    - _TopNoisePower: 2
     - _TopNormalBlend: 0.15
     - _TopNormalThreshold: 0.2
     - _TopThreshold: 2.44
@@ -71,7 +71,7 @@ Material:
     - _TopColor: {r: 0.058504775, g: 0.29485255, b: 0.3132075, a: 1}
     - _TopHighColor: {r: 0.98823535, g: 0.9960785, b: 1, a: 1}
     - _TopLightColor: {r: 1, g: 0.7523708, b: 0.33773577, a: 1}
-    - _TopLowColor: {r: 1, g: 0.67359966, b: 0.3150943, a: 1}
+    - _TopLowColor: {r: 0.6830188, g: 0.35907274, b: 0, a: 1}
     - _TopShadowColor: {r: 0.30980393, g: 0.3882353, b: 0.4509804, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

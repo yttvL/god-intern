@@ -33,8 +33,8 @@ public class FakeSunOrbitController : MonoBehaviour
     [SerializeField] private bool animateOnPlay = true;
 
     [Header("Shader Binding")]
-    [Tooltip("Shader property name used by the terrain shader for fake light direction.")]
     [SerializeField] private string lightDirectionProperty = "_LightDirection";
+    [SerializeField] private string lightPositionProperty = "_LightPositionWS";
 
     [Tooltip(
         "If true, sends direction from orbit origin to fake sun.\n" +
@@ -51,6 +51,7 @@ public class FakeSunOrbitController : MonoBehaviour
 
     private MaterialPropertyBlock propertyBlock;
     private int lightDirectionPropertyId;
+    private int lightPositionPropertyId;
     private float currentAngleDegrees;
 
     private void OnEnable()
@@ -123,6 +124,7 @@ public class FakeSunOrbitController : MonoBehaviour
     private void CachePropertyId()
     {
         lightDirectionPropertyId = Shader.PropertyToID(lightDirectionProperty);
+        lightPositionPropertyId = Shader.PropertyToID(lightPositionProperty);
     }
 
     private void UpdateOrbitAndShader()
@@ -133,7 +135,7 @@ public class FakeSunOrbitController : MonoBehaviour
         }
 
         UpdateFakeSunPosition();
-        ApplyLightDirectionToMaterial();
+        ApplyLightDataToMaterial();
     }
 
     private void UpdateFakeSunPosition()
@@ -182,14 +184,21 @@ public class FakeSunOrbitController : MonoBehaviour
         return direction.normalized;
     }
 
-    private void ApplyLightDirectionToMaterial()
+    private void ApplyLightDataToMaterial()
     {
         if (terrainRenderer == null)
         {
             return;
         }
 
+        // Directional-style light direction.
+        // Used by side shading.
         Vector3 lightDirection = ComputeLightDirection();
+
+        // Point-light-style world position.
+        // Used by top shading, where each pixel computes:
+        // normalize(_LightPositionWS.xyz - positionWS)
+        Vector3 lightPositionWS = fakeSun.position;
 
         terrainRenderer.GetPropertyBlock(propertyBlock);
         propertyBlock.SetVector(lightDirectionPropertyId, new Vector4(
@@ -198,6 +207,14 @@ public class FakeSunOrbitController : MonoBehaviour
             lightDirection.z,
             0.0f
         ));
+
+        propertyBlock.SetVector(lightPositionPropertyId, new Vector4(
+            lightPositionWS.x,
+            lightPositionWS.y,
+            lightPositionWS.z,
+            1.0f
+        ));
+
         terrainRenderer.SetPropertyBlock(propertyBlock);
     }
 

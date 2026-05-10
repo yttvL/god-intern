@@ -35,7 +35,7 @@ Material:
     - _EmissionIntensity: 12
     - _NoiseScale: 25
     - _NoiseSpeed: 5
-    - _StencilComp: 8
+    - _StencilComp: 3
     - _StencilPass: 2
     - _Threshold: 0.55
     m_Colors:

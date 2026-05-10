@@ -19,8 +19,8 @@ MonoBehaviour:
   threshold: 0.0016
   invert: 0
   edgeThreshold: 8
-  exposure: 1.16
-  attenuation: 1.59
+  exposure: 2.55
+  attenuation: 6.8
   useDownscaledColor: 0
   fillColor: {r: 0.17604129, g: 0.4339623, b: 0.31980056, a: 1}
   useSeperateEdgeColor: 0
