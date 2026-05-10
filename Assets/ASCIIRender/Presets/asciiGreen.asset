@@ -34,4 +34,4 @@ MonoBehaviour:
   noEdges: 0
   noFill: 0
   renderPassInjectionPoint: 600
-  applyToSceneView: 1
+  applyToSceneView: 0

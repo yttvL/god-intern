@@ -3,10 +3,12 @@ Shader "Custom/Terrain"
     Properties
     {
         // stencil mode
+        [Header(Stencil)]
         [Enum(UnityEngine.Rendering.CompareFunction)] 
         _StencilComp("Stencil Comp", Float) = 3
 
         // displacement parameters
+        [Header(Displacement)]
         _Height ("Displacement Height", Float) = 0.08   //final displacement = noise * _Height
         _NoiseScale ("Noise Scale", Float) = 1.5
         _ScrollSpeed ("Scroll Speed", Float) = 0.15
@@ -14,17 +16,20 @@ Shader "Custom/Terrain"
 
         // FBM / Perlin Parameters
         // 每增加一层，频率乘以 lacunarity，振幅乘以 persistence
+        [Header(FBM Parameters)]
         _Octaves ("Octaves", Float) = 4.0
         _Lacunarity ("Lacunarity", Float) = 2.0
         _Persistence ("Persistence", Float) = 0.5
         _SeedOffset ("Seed Offset", Vector) = (13.1, 27.7, 0, 0)
 
         // displacement mask
+        [Header(Top Displacement Mask)]
         _HeightThreshold ("Height Threshold", Float) = 0.3  // object_space y超过这个值才开始位移
         _BlendRange ("Blend Range", Float) = 0.15
         _ObjectTopY ("Object Top Y", Float) = 1.0
 
         // top color
+        [Header(Top Base Color)]
         _TopLowColor ("Top Noise Low Color", Color) = (0.25, 0.38, 0.42, 1)
         _TopHighColor ("Top Noise High Color", Color) = (0.75, 0.90, 0.92, 1)
 
@@ -34,6 +39,7 @@ Shader "Custom/Terrain"
         _TopNoisePower ("Top Noise Power", Float) = 1.6
 
         // Top Toon Lighting
+        [Header(Top Toon Lighting)]
         _TopLightColor ("Top Light Color", Color) = (1.0, 0.9, 0.65, 1)
         _TopShadowColor ("Top Shadow Color", Color) = (0.55, 0.65, 0.75, 1)
 
@@ -44,11 +50,13 @@ Shader "Custom/Terrain"
         _TopLightStrength ("Top Light Strength", Range(0,2)) = 0.7
 
         // side color
+        [Header(Side Base Color)]
         _SideBaseColor ("Side Base Color", Color) = (0.72, 0.82, 0.80, 1)
         _SideBottomColor ("Side Bottom Color", Color) = (0.52, 0.62, 0.62, 1)
         _SideGradientTopY ("Side Gradient Top Y", Float) = 1.0
         
         // crust color
+        [Header(Crust Color)]
         _CrustColor ("Crust Color", Color) = (0.22, 0.38, 0.42, 1)
         _CrustThickness ("Crust Thickness", Float) = 0.08
         _CrustSoftness ("Crust Softness", Float) = 0.03
@@ -57,10 +65,12 @@ Shader "Custom/Terrain"
         // 用 normalWS.y 判断一个 fragment 属于 top face 还是 side face
         // 0 = pure side, 1 = pure top
         // Threshold 越大，越严格要求法线朝上才能算 top
+        [Header(TopSide Mask)]
         _TopNormalThreshold ("Top Normal Threshold", Range(0,1)) = 0.45
         _TopNormalBlend ("Top Normal Blend", Range(0.001,1)) = 0.15
 
         // Fake Lighting
+        [Header(Fake Lighting)]
         _LightDirection ("Fake Light Direction", Vector) = (0.4, 0.8, 0.3, 0)
         _LightStrength ("Light Strength", Range(0,1)) = 0.35
         _Ambient ("Ambient", Range(0,1)) = 0.75

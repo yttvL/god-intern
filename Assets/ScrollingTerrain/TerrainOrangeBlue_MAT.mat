@@ -26,7 +26,7 @@ Material:
     m_Ints:
     - _Octaves: 4
     m_Floats:
-    - _Ambient: 0.3
+    - _Ambient: 0.15
     - _BaseThreshold: -1.58
     - _BlendRange: 0.15
     - _CrustSoftness: 0.02
@@ -41,7 +41,7 @@ Material:
     - _ObjectTopY: 0.5
     - _Octaves: 5
     - _Persistence: 0.5
-    - _ScrollSpeed: 0.2
+    - _ScrollSpeed: 0.3
     - _SideBaseY: -0.5
     - _SideColorDropRange: 0.3
     - _SideColorPower: 1.5
@@ -49,9 +49,9 @@ Material:
     - _SideTopY: 0.5
     - _Speed: 2.21
     - _StencilComp: 3
-    - _TopLightSoftness: 0.38
+    - _TopLightSoftness: 0.3
     - _TopLightStrength: 0.7
-    - _TopLightThreshold: 0.04
+    - _TopLightThreshold: 0.05
     - _TopNoisePower: 1.83
     - _TopNormalBlend: 0.15
     - _TopNormalThreshold: 0.2
@@ -61,17 +61,17 @@ Material:
     - _BottomColor: {r: 1, g: 1, b: 1, a: 1}
     - _ColorBottom: {r: 0, g: 0, b: 0, a: 1}
     - _ColorTop: {r: 1, g: 1, b: 1, a: 1}
-    - _CrustColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CrustColor: {r: 0.8792453, g: 0.6899738, b: 0.46284798, a: 1}
     - _LightDirection: {r: -0.2, g: 1, b: 1, a: 0}
     - _ScrollDirection: {r: 0, g: 1, b: 0, a: 0}
     - _SeedOffset: {r: 13.1, g: 27.7, b: 0, a: 0}
-    - _SideBaseColor: {r: 0.82641506, g: 0.35534805, b: 0, a: 1}
+    - _SideBaseColor: {r: 0.9622642, g: 0.41500494, b: 0, a: 1}
     - _SideBottomColor: {r: 0.7568628, g: 0.5019608, b: 0.23137257, a: 1}
     - _SideTopColor: {r: 0.54999995, g: 0.7, b: 0.7, a: 1}
     - _TopColor: {r: 0.058504775, g: 0.29485255, b: 0.3132075, a: 1}
     - _TopHighColor: {r: 0.98823535, g: 0.9960785, b: 1, a: 1}
-    - _TopLightColor: {r: 1, g: 0.9019608, b: 0.6509804, a: 1}
-    - _TopLowColor: {r: 0.9411765, g: 0.7019608, b: 0.4392157, a: 1}
-    - _TopShadowColor: {r: 0.54901963, g: 0.6509804, b: 0.7490196, a: 1}
+    - _TopLightColor: {r: 1, g: 0.7523708, b: 0.33773577, a: 1}
+    - _TopLowColor: {r: 1, g: 0.67359966, b: 0.3150943, a: 1}
+    - _TopShadowColor: {r: 0.30980393, g: 0.3882353, b: 0.4509804, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

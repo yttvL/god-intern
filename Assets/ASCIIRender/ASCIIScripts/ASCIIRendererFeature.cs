@@ -20,8 +20,9 @@ public class ASCIIRendererFeature : ScriptableRendererFeature
 {
     public enum ASCIIRenderMode
     {
-        Fullscreen = 0,
-        StencilComposite = 1
+        FullscreenASCII,
+        StencilNormalColor,
+        StencilDOG
     }
 
     [Serializable]
@@ -100,7 +101,7 @@ public class ASCIIRendererFeature : ScriptableRendererFeature
 
         [Header("Render Mode")]
         [Tooltip("Fullscreen: copy ASCII result over the whole camera color.\nStencilComposite: use stencil to keep normal rendering inside stencil Ref and show ASCII outside it.")]
-        public ASCIIRenderMode renderMode = ASCIIRenderMode.Fullscreen;
+        public ASCIIRenderMode renderMode = ASCIIRenderMode.FullscreenASCII;
 
         [Tooltip("Stencil reference value written by the stencil writer.")]
         public int stencilRef = 1;

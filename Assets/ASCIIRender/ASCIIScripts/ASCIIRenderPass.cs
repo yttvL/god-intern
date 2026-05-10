@@ -11,22 +11,22 @@ using UnityEngine.Rendering.Universal;
 /// </summary>
 public class ASCIIRenderPass : ScriptableRenderPass
 {
-    private const int CopyPass = 0;
-    private const int LuminancePass = 1;
-    private const int PackLuminancePass = 2;
-    private const int HorizontalBlurPass = 3;
-    private const int VerticalBlurDifferencePass = 4;
-    private const int SobelHorizontalPass = 5;
-    private const int SobelVerticalPass = 6;
-    private const int CopyOutsideStencilPass = 9;
-    private const int CopyInsideStencilPass = 10;
+    private const int CopyPassId = 0;
+    private const int LuminancePassId = 1;
+    private const int PackLuminancePassId = 2;
+    private const int HorizontalBlurPassId = 3;
+    private const int VerticalBlurDifferencePassId = 4;
+    private const int SobelHorizontalPassId = 5;
+    private const int SobelVerticalPassId = 6;
+    private const int CopyOutsideStencilPassId = 7;
+    private const int CopyInsideStencilPassId = 8;
 
     private const string ComputeKernelName = "CS_DrawEdges";
 
     // Cached shader property IDs.
-    private static readonly int AsciiTexId = Shader.PropertyToID("_AsciiTex");
-    private static readonly int LuminanceTexId = Shader.PropertyToID("_LuminanceTex");
     private static readonly int StencilRefId = Shader.PropertyToID("_StencilRef");
+
+    private static readonly int LuminanceTexId = Shader.PropertyToID("_LuminanceTex");
 
     private static readonly int SigmaId = Shader.PropertyToID("_Sigma");
     private static readonly int KId = Shader.PropertyToID("_K");
@@ -79,7 +79,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
         public int extraTextureId;
         public bool hasExtraTextureInput;
         public Material material;
-        public int shaderPass;
+        public int shaderPassId;
     }
 
     /// <summary>
@@ -206,6 +206,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
         TextureHandle asciiTex = renderGraph.ImportTexture(asciiTexRTHandle);
         TextureHandle edgeTex = renderGraph.ImportTexture(edgeTexRTHandle);
 
+        // get stencil buffer
         TextureHandle cameraDepth = resourceData.activeDepthTexture;
 
         GraphicsFormat signedFormat = GraphicsFormat.R16G16B16A16_SFloat;
@@ -300,13 +301,12 @@ public class ASCIIRenderPass : ScriptableRenderPass
             true
         );
 
-        AddBlitPass(renderGraph, cameraColor, normalSceneCopy, CopyPass, "RG_ASCII_CopyNormalSceneBeforeASCII");
+        AddBlitPass(renderGraph, cameraColor, normalSceneCopy, CopyPassId, "RG_ASCII_CopyNormalScene");
 
-        AddBlitPass(renderGraph, cameraColor, luminance, LuminancePass, "RG_ASCII_LuminanceExtract");
+        AddBlitPass(renderGraph, cameraColor, luminance, LuminancePassId, "RG_ASCII_LuminanceExtract");
 
-        AddBlitPass(renderGraph, luminance, ping, HorizontalBlurPass, "RG_ASCII_GaussianBlurHorizontal");
-
-        AddBlitPass(renderGraph, ping, dog, VerticalBlurDifferencePass, "RG_ASCII_GaussianBlurVertical_DoG");
+        AddBlitPass(renderGraph, luminance, ping, HorizontalBlurPassId, "RG_ASCII_GaussianBlurHorizontal");
+        AddBlitPass(renderGraph, ping, dog, VerticalBlurDifferencePassId, "RG_ASCII_GaussianBlurVertical_DoG");
 
         AddBlitPassWithExtraTextureInput(
             renderGraph,
@@ -314,25 +314,15 @@ public class ASCIIRenderPass : ScriptableRenderPass
             ping,
             luminance,
             LuminanceTexId,
-            SobelHorizontalPass,
+            SobelHorizontalPassId,
             "RG_ASCII_SobelHorizontal"
         );
 
-        AddBlitPass(renderGraph, ping, sobel, SobelVerticalPass, "RG_ASCII_SobelVertical");
+        AddBlitPass(renderGraph, ping, sobel, SobelVerticalPassId, "RG_ASCII_SobelVertical");
 
-        AddBlitPassWithExtraTextureInput(
-            renderGraph,
-            cameraColor,
-            ping,
-            luminance,
-            LuminanceTexId,
-            PackLuminancePass,
-            "RG_ASCII_PackColorLuminance"
-        );
-
-        AddBlitPass(renderGraph, ping, downscale1, CopyPass, "RG_ASCII_DownscaleHalf");
-        AddBlitPass(renderGraph, downscale1, downscale2, CopyPass, "RG_ASCII_DownscaleQuarter");
-        AddBlitPass(renderGraph, downscale2, downscale3, CopyPass, "RG_ASCII_DownscaleEighth");
+        AddBlitPass(renderGraph, cameraColor, downscale1, CopyPassId, "RG_ASCII_DownscaleHalf");
+        AddBlitPass(renderGraph, downscale1, downscale2, CopyPassId, "RG_ASCII_DownscaleQuarter");
+        AddBlitPass(renderGraph, downscale2, downscale3, CopyPassId, "RG_ASCII_DownscaleEighth");
 
         AddComputePass(
             renderGraph,
@@ -347,6 +337,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
         );
 
         TextureHandle finalSource = asciiResult;
+        TextureHandle stencilSource = normalSceneCopy;
 
         if (settings.viewDog)
             finalSource = dog;
@@ -354,7 +345,21 @@ public class ASCIIRenderPass : ScriptableRenderPass
         if (settings.viewSobel)
             finalSource = sobel;
 
-        if (settings.renderMode == ASCIIRendererFeature.ASCIIRenderMode.StencilComposite)
+        switch (settings.renderMode)
+        {
+            case ASCIIRendererFeature.ASCIIRenderMode.FullscreenASCII:
+                 break;
+
+            case ASCIIRendererFeature.ASCIIRenderMode.StencilNormalColor:
+                stencilSource = normalSceneCopy;
+                break;
+
+            case ASCIIRendererFeature.ASCIIRenderMode.StencilDOG:
+                stencilSource = dog;
+                break;
+        }
+
+        if (settings.renderMode != ASCIIRendererFeature.ASCIIRenderMode.FullscreenASCII)
         {
             // First draw ASCII only where stencil != _StencilRef.
             AddBlitPassWithOptionalDepthStencil(
@@ -362,23 +367,23 @@ public class ASCIIRenderPass : ScriptableRenderPass
                 finalSource,
                 cameraColor,
                 cameraDepth,
-                CopyOutsideStencilPass,
+                CopyOutsideStencilPassId,
                 "RG_ASCII_CopyASCIIOutsideStencil"
             );
 
             // Then restore the original normal scene only where stencil == _StencilRef.
             AddBlitPassWithOptionalDepthStencil(
                 renderGraph,
-                normalSceneCopy,
+                stencilSource,
                 cameraColor,
                 cameraDepth,
-                CopyInsideStencilPass,
+                CopyInsideStencilPassId,
                 "RG_ASCII_RestoreNormalInsideStencil"
             );
         }
         else
         {
-            AddBlitPass(renderGraph, finalSource, cameraColor, CopyPass, "RG_ASCII_CopyComputeToCamera");
+            AddBlitPass(renderGraph, finalSource, cameraColor, CopyPassId, "RG_ASCII_CopyComputeToCamera");
         }
     }
 
@@ -394,7 +399,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
     /// </summary>
     private void UpdateSettingsToMaterial()
     {
-        material.SetTexture(AsciiTexId, settings.asciiTex);
+        material.SetFloat(StencilRefId, settings.stencilRef);
 
         material.SetFloat(KId, settings.stdevScale);
         material.SetFloat(SigmaId, settings.stdev);
@@ -483,7 +488,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
         RenderGraph renderGraph,
         TextureHandle source,
         TextureHandle destination,
-        int shaderPass,
+        int shaderPassId,
         string passName
     )
     {
@@ -493,7 +498,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
             destination,
             TextureHandle.nullHandle,
             0,
-            shaderPass,
+            shaderPassId,
             passName
         );
     }
@@ -516,7 +521,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
         TextureHandle destination,
         TextureHandle extraTextureInput,
         int extraTextureId,
-        int shaderPass,
+        int shaderPassId,
         string passName
     )
     {
@@ -531,7 +536,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
         passData.extraTextureId = extraTextureId;
         passData.hasExtraTextureInput = extraTextureInput.IsValid();
         passData.material = material;
-        passData.shaderPass = shaderPass;
+        passData.shaderPassId = shaderPassId;
 
         // Tell RenderGraph that this pass reads the main source texture.
         builder.UseTexture(passData.source, AccessFlags.Read);
@@ -562,7 +567,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
                 new Vector4(1.0f, 1.0f, 0.0f, 0.0f),    // Source UV scale/bias: xy scale, zw offset.
 
                 data.material,
-                data.shaderPass
+                data.shaderPassId
             );
         });
     }
@@ -577,7 +582,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
         TextureHandle source,
         TextureHandle destination,
         TextureHandle depthStencil,
-        int shaderPass,
+        int shaderPassId,
         string passName
     )
     {
@@ -589,11 +594,12 @@ public class ASCIIRenderPass : ScriptableRenderPass
         passData.extraTextureId = 0;
         passData.hasExtraTextureInput = false;
         passData.material = material;
-        passData.shaderPass = shaderPass;
+        passData.shaderPassId = shaderPassId;
 
         builder.UseTexture(passData.source, AccessFlags.Read);
         builder.SetRenderAttachment(destination, 0);
 
+        // bind depth attachment for stencil test
         if (depthStencil.IsValid())
             builder.SetRenderAttachmentDepth(depthStencil, AccessFlags.Read);
 
@@ -604,7 +610,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
                 data.source,
                 new Vector4(1.0f, 1.0f, 0.0f, 0.0f),
                 data.material,
-                data.shaderPass
+                data.shaderPassId
             );
         });
     }
@@ -681,6 +687,7 @@ public class ASCIIRenderPass : ScriptableRenderPass
         builder.UseTexture(passData.asciiTex, AccessFlags.Read);
         builder.UseTexture(passData.edgeTex, AccessFlags.Read);
         builder.UseTexture(passData.result, AccessFlags.Write);
+
         builder.SetRenderFunc(static (ComputePassData data, ComputeGraphContext context) =>
         {
             // Bind textures to compute shader.

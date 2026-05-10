@@ -41,7 +41,7 @@ Material:
     - _ObjectTopY: 0.5
     - _Octaves: 4
     - _Persistence: 0.4
-    - _ScrollSpeed: 0.2
+    - _ScrollSpeed: 0.5
     - _SideBaseY: -0.5
     - _SideColorDropRange: 0.3
     - _SideColorPower: 1.5

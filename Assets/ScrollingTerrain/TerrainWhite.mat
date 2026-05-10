@@ -48,7 +48,7 @@ Material:
     - _SideGradientTopY: 2.78
     - _SideTopY: 0.5
     - _Speed: 2.21
-    - _StencilComp: 3
+    - _StencilComp: 8
     - _TopLightSoftness: 0.001
     - _TopLightStrength: 0.7
     - _TopLightThreshold: 0.52

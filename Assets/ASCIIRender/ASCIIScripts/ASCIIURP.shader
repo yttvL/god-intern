@@ -2,8 +2,7 @@ Shader "Hidden/ASCIIURP"
 {   
     Properties
     {
-        _AsciiTex("ASCII Texture", 2D) = "white" {}
-        _StencilRef("Stencil Ref", Integer) = 1
+        _StencilRef("Stencil Ref", Float) = 1
 
         ////
         // _DepthEpsilon("Depth Epsilon", Float) = 0.0001
@@ -72,7 +71,7 @@ Shader "Hidden/ASCIIURP"
             return SAMPLE_TEXTURE2D_X(_LuminanceTex, sampler_PointClamp, uv);
         }
 
-        float SampleSceneEyeDepth(float2 uv)
+        /*float SampleSceneEyeDepth(float2 uv)
         {
             float rawDepth = SAMPLE_TEXTURE2D_X(_SceneDepthTex, sampler_PointClamp, uv).r;
             return LinearEyeDepth(rawDepth, _ZBufferParams);
@@ -82,7 +81,7 @@ Shader "Hidden/ASCIIURP"
         {
             float rawDepth = SAMPLE_TEXTURE2D_X(_ObjectDepthTex, sampler_PointClamp, uv).r;
             return LinearEyeDepth(rawDepth, _ZBufferParams);
-        }
+        }*/
 
         ENDHLSL
 
@@ -104,7 +103,9 @@ Shader "Hidden/ASCIIURP"
             ENDHLSL
         }
 
-        // Pass 1: Luminance.xxxx
+        // Pass 1: Luminance
+        // input: camera color
+        // output: luminance.xxxx
         Pass
         {
             Name "Luminance"
@@ -126,10 +127,11 @@ Shader "Hidden/ASCIIURP"
             ENDHLSL
         }
 
+        // DEPRECATED
         // Pass 2: Pack Luminance
         // input1: camera color
         // input2: Luminance
-        // output: ping
+        // output: float4(col, lum)
         Pass
         {
             Name "Pack Luminance"
@@ -227,6 +229,7 @@ Shader "Hidden/ASCIIURP"
         }
 
         // Pass 5: Sobel Horizontal
+        // output: r = Gx difference, g = Gy smoothing
         Pass
         {
             Name "Sobel Horizontal"
@@ -296,10 +299,58 @@ Shader "Hidden/ASCIIURP"
             ENDHLSL
         }
 
+        // Pass 7: Copy only outside stencil.
+        // Used by StencilComposite mode: ASCII is visible where stencil != _StencilRef.
+        // input: ascii result RT full screen
+        Pass
+        {
+            Name "Copy Outside Stencil"
 
-        // =================================================================================
+            Stencil
+            {
+                Ref [_StencilRef]
+                Comp NotEqual
+                Pass Keep
+            }
 
-        // Pass 7: Visible Object Depth Clip
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            float4 Frag(Varyings input) : SV_Target
+            {
+                return SampleBlitPoint(input.texcoord);
+            }
+            ENDHLSL
+        }
+
+        // Pass 8: Copy only inside stencil.
+        // Used by StencilComposite mode: normal scene is restored where stencil == _StencilRef.
+        // input: original camera color RT full screen
+        Pass
+        {
+            Name "Copy Inside Stencil"
+
+            Stencil
+            {
+                Ref [_StencilRef]
+                Comp Equal
+                Pass Keep
+            }
+
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            float4 Frag(Varyings input) : SV_Target
+            {
+                return SampleBlitPoint(input.texcoord);
+            }
+            ENDHLSL
+        }
+
+        /*
+        // Pass 9: Visible Object Depth Clip
         // Input _BlitTexture = ObjectColorRT
         // Extra _SceneDepthTex = depth of scene without ASCII object
         // Extra _ObjectDepthTex = depth of ASCII object
@@ -333,7 +384,7 @@ Shader "Hidden/ASCIIURP"
             ENDHLSL
         }
 
-        // Pass 8: Transparent ASCII Composite
+        // Pass 10: Transparent ASCII Composite
         // Input _BlitTexture = TransparentASCIIObjectRT
         // Destination = camera color / BaseColorRT
         Pass
@@ -359,54 +410,8 @@ Shader "Hidden/ASCIIURP"
             }
             ENDHLSL
         }
+        */
 
-        // Pass 9: Copy only outside stencil.
-        // Used by StencilComposite mode: ASCII is visible where stencil != _StencilRef.
-        Pass
-        {
-            Name "Copy Outside Stencil"
-
-            Stencil
-            {
-                Ref [_StencilRef]
-                Comp NotEqual
-                Pass Keep
-            }
-
-            HLSLPROGRAM
-            #pragma vertex Vert
-            #pragma fragment Frag
-
-            float4 Frag(Varyings input) : SV_Target
-            {
-                return SampleBlitPoint(input.texcoord);
-            }
-            ENDHLSL
-        }
-
-        // Pass 10: Copy only inside stencil.
-        // Used by StencilComposite mode: normal scene is restored where stencil == _StencilRef.
-        Pass
-        {
-            Name "Copy Inside Stencil"
-
-            Stencil
-            {
-                Ref [_StencilRef]
-                Comp Equal
-                Pass Keep
-            }
-
-            HLSLPROGRAM
-            #pragma vertex Vert
-            #pragma fragment Frag
-
-            float4 Frag(Varyings input) : SV_Target
-            {
-                return SampleBlitPoint(input.texcoord);
-            }
-            ENDHLSL
-        }
     }
 
     FallBack Off

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4eae5bd4a9f66224382841b669fe33e2, type: 3}
-  m_Name: asciiBlue
+  m_Name: asciiGreen2
   m_EditorClassIdentifier: Assembly-CSharp::ASCIIPreset
   gaussianKernelSize: 2
   stdev: 1
@@ -21,10 +21,10 @@ MonoBehaviour:
   edgeThreshold: 8
   exposure: 1.16
   attenuation: 1.59
-  useDownscaledColor: 1
-  fillColor: {r: 0.7529412, g: 0.46109682, b: 0.27450985, a: 1}
-  useSeperateEdgeColor: 1
-  edgeColor: {r: 0.7433963, g: 0.3957903, b: 0.26229262, a: 1}
+  useDownscaledColor: 0
+  fillColor: {r: 0.17604129, g: 0.4339623, b: 0.31980056, a: 1}
+  useSeperateEdgeColor: 0
+  edgeColor: {r: 0.090196066, g: 0.38039216, b: 0.23529412, a: 1}
   viewDog: 0
   viewSobel: 0
   viewGrid: 0
@@ -34,4 +34,4 @@ MonoBehaviour:
   noEdges: 0
   noFill: 0
   renderPassInjectionPoint: 600
-  applyToSceneView: 1
+  applyToSceneView: 0

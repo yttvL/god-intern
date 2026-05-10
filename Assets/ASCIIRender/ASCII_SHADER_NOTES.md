@@ -1,13 +1,20 @@
 # ASCII Shader Notes
 
+## Update 2026-05-09
+
+1. ASCII Render Mode
+为了本项目分离电脑object和屏幕内的显示效果，新增 Render Mode 选项：
+- FullscreenASCII
+- StencilNormalColor
+- StencilDOG
+
+---
+
 ## Update 2026-05-08
 
 1. ASCII Preset Workflow
-新增 RenderFeature preset 保存/恢复流程  
-使用 ScriptableObject 保存 ASCII visual settings  
-可直接在 RenderFeature Inspector 中：
-- Save Render Feature -> Preset
-- Apply Preset -> Render Feature
+创建 ScriptableObject 资产保存 ASCII RenderFeature 设置
+支持视觉调试阶段的快速保存/恢复配置
 
 ---
 
@@ -114,3 +121,19 @@ texel = _BlitTexture_TexelSize.xy * _SobelStep
 2. Separate Edge Color
 可选开关
 开启后 edge 使用独立颜色
+
+3. Preset SO
+新增 RenderFeature preset 保存/恢复流程  
+使用 ScriptableObject 保存 ASCII visual settings  
+可直接在 RenderFeature Inspector 中：
+- Save Render Feature -> Preset
+- Apply Preset -> Render Feature
+
+4. ASCII Render Modes
+FullscreenASCII: 当前全屏 ASCII 效果
+StencilNormalColor: 
+	stencil 外区域： 输出 ASCII result
+    stencil 内区域： 恢复原始 cameraColor
+StencilDOG: 
+    stencil 外区域： 输出 DoG 边缘检测结果（binary mask）
+    stencil 内区域： 恢复原始 cameraColor
