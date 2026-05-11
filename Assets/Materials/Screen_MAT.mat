@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: FakeSun_MAT
-  m_Shader: {fileID: 4800000, guid: 4fed620d1c44f484f96784e6505f00c7, type: 3}
+  m_Name: Screen_MAT
+  m_Shader: {fileID: 4800000, guid: 91cd3baf872e69c4ba8fc5d7b626d2ed, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -29,19 +29,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Alpha: 1
-    - _BandWidth: 0.35
-    - _CoreWidth: 0.5
-    - _EmissionIntensity: 12
-    - _NoiseScale: 25
-    - _NoiseSpeed: 5
-    - _StencilComp: 3
+    - _StencilComp: 8
+    - _StencilOp: 2
     - _StencilPass: 2
-    - _Threshold: 0.55
     m_Colors:
-    - _BandColor: {r: 1, g: 0.12, b: 0.02, a: 1}
-    - _BaseColor: {r: 1, g: 0.46523464, b: 0, a: 1}
-    - _BodyColor: {r: 1, g: 0.45, b: 0.05, a: 1}
-    - _CoreColor: {r: 0, g: 0, b: 0, a: 1}
+    - _BaseColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

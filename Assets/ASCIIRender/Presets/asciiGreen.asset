@@ -19,12 +19,12 @@ MonoBehaviour:
   threshold: 0.0016
   invert: 0
   edgeThreshold: 8
-  exposure: 1.16
-  attenuation: 1.59
+  exposure: 2.18
+  attenuation: 6.8
   useDownscaledColor: 1
-  fillColor: {r: 0.27450982, g: 0.7529412, b: 0.5411765, a: 1}
+  fillColor: {r: 0.32231393, g: 0.7660377, b: 0.57106817, a: 1}
   useSeperateEdgeColor: 1
-  edgeColor: {r: 0.090196066, g: 0.38039216, b: 0.23529412, a: 1}
+  edgeColor: {r: 0.22398713, g: 0.7283019, b: 0.4761445, a: 1}
   viewDog: 0
   viewSobel: 0
   viewGrid: 0

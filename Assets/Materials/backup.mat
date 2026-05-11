@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: TerrainOrangeBlue_MAT
+  m_Name: backup
   m_Shader: {fileID: 4800000, guid: 1123c44687709da439c45478147723a8, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -26,13 +26,13 @@ Material:
     m_Ints:
     - _Octaves: 4
     m_Floats:
-    - _Ambient: 0.15
+    - _Ambient: 0.14
     - _BaseThreshold: -1.58
     - _BlendRange: 0.15
     - _CrustSoftness: 0.02
     - _CrustThickness: -1.46
     - _Frequency: 8.52
-    - _Height: 3.37
+    - _Height: 3.3
     - _HeightThreshold: 0.2
     - _Lacunarity: 2
     - _LightStrength: 1
@@ -48,7 +48,7 @@ Material:
     - _SideGradientTopY: 2.78
     - _SideTopY: 0.5
     - _Speed: 2.21
-    - _StencilComp: 3
+    - _StencilComp: 8
     - _TopLightSoftness: 0.3
     - _TopLightStrength: 0.7
     - _TopLightThreshold: 0.5
