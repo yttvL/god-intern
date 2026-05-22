@@ -11,7 +11,12 @@ Shader "Custom/Screen"
 
     SubShader
     {
-        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" "Queue"="Geometry+5" }
+        Tags
+        {
+            "RenderPipeline"="UniversalPipeline"
+            "RenderType"="Opaque"
+            "Queue"="Geometry+5"
+        }
 
         ZWrite Off
         Stencil
